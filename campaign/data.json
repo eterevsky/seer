@@ -1,0 +1,53 @@
+{
+    "title": "Campaign",
+    "players": [
+        {"name": "Aengus"},
+        {"name": "El"}
+    ],
+    "pages": [
+        {
+            "tokens": [
+                {"id": 1, "fragment_id": "map-shipyard"},
+                {"id": 2, "fragment_id": "hero-1", "position": [5, 5]},
+                {"id": 3, "fragment_id": "hero-2", "position": [10, 5]}
+            ]
+        },
+        {
+            "tokens": [
+                {"id": 4, "fragment_id": "map-camp"},
+                {"id": 5, "fragment_id": "hero-1", "position": [5, 5]},
+                {"id": 6, "fragment_id": "hero-2", "position": [10, 5]}
+            ]
+        }
+    ],
+    "fragments": {
+        "map-shipyard": {
+            "path": "maps/Shipyard (23x16) Base Map, Day.jpg",
+            "width": 23,
+            "height": 23,
+            "position": [0, 0],
+            "type": "tile"
+        },
+        "map-camp": {
+            "path": "maps/BanditCamp.jpg",
+            "width": 23,
+            "height": 16,
+            "position": [0, 0],
+            "type": "tile"
+        },
+        "hero-1": {
+            "path": "tokens/HeroTokens2/1.png",
+            "width": 1,
+            "height": 1,
+            "player": "Aengus",
+            "type": "token-char"
+        },
+        "hero-2": {
+            "path": "tokens/HeroTokens2/2.png",
+            "width": 1,
+            "height": 1,
+            "player": "El",
+            "type": "token-char"
+        }
+    }
+}
