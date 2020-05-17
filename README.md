@@ -40,7 +40,7 @@ but should also work on Windows and Linux. Requires requests and pyglet:
 | Key                | Operation                                          |
 |--------------------|----------------------------------------------------|
 | Esc                | Exit                                               |
-| W,A,S,D            | Pan map                                            |
+| W, A, S, D         | Pan map                                            |
 | Scroll wheel       | Zoom                                               |
 | F                  | Toggle fullscreen                                  |
 | G                  | Toggle grid                                        |
@@ -51,7 +51,7 @@ but should also work on Windows and Linux. Requires requests and pyglet:
 ## Roadmap
 
 - [ ] DM to change the page visible to the players.
-- [ ] Make it possible for DM to hide parts of the map.
+- [ ] Make it possible for DM to hide parts of the map from the players.
 - [ ] Save the campaign state upon exiting.
 - [ ] Add chat.
 - [ ] Make it possible to roll dice in the chat.
@@ -60,9 +60,10 @@ but should also work on Windows and Linux. Requires requests and pyglet:
 - [ ] UI to add tokens to the game.
 - [ ] Rudimentary character sheets.
 - [ ] Make it possible to indicate a point on the map.
+- [ ] Support IPv4
 
 ## Acknoledgements
 
 The assets in the example campaign are from
-[2minutetabletop.com](https://2minutetabletop.com/), and used in accordance
+[2minutetabletop.com](https://2minutetabletop.com/), and are used in accordance
 with [CC BY-NC 4.0](https://creativecommons.org/licenses/by-nc/4.0/).
