@@ -299,12 +299,12 @@ def master_main(campaign_dir):
     ip = requests.get('https://api6.ipify.org').text
     print('Address: {}'.format(ip))
 
-    window = pyglet.window.Window(resizable=True)
-    res_server = resserver.ResourceServer(campaign_dir)
-    api_server = apiserver.ApiServer(window)
-
     resource_provider = LocalResourceProvider(campaign_dir)
     campaign = Campaign(resource_provider, None)
+    window = pyglet.window.Window(resizable=True)
+    res_server = resserver.ResourceServer(campaign_dir, campaign)
+    api_server = apiserver.ApiServer(window)
+
     manager = Manager(window, campaign, api_server, None)
 
     pyglet.app.run()
