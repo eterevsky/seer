@@ -46,13 +46,14 @@ but should also work on Windows and Linux. Requires requests and pyglet:
 | G                  | Toggle grid                                        |
 | Mouse drag         | Drag a token that you can control.                 |
 | Shift + mouse drag | Align to grid after move.                          |
-| PgUp, PgDn         | Turn to the previous/next page. Only works for DM. |
+| PgUp, PgDn         | Turn to the previous/next page (DM only).          |
+| P                  | Bring players to the current map (DM only).        |
 
 ## Roadmap
 
-- [ ] DM to change the page visible to the players.
-- [ ] Make it possible for DM to hide parts of the map from the players.
+- [x] DM can change the page visible to the players.
 - [ ] Save the campaign state upon exiting.
+- [ ] Make it possible for DM to hide parts of the map from the players.
 - [ ] Add chat.
 - [ ] Make it possible to roll dice in the chat.
 - [ ] UI for DM to add map tiles and tokens to the campaign.

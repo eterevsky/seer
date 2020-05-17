@@ -36,11 +36,11 @@ class Fragment(object):
     May contain the default values for controlling player and position.
     """
 
-    def __init__(self, config, provider, id):
+    def __init__(self, data, provider, id):
         self.id = id
-        self._config = config
-        fname = os.path.basename(config['path'])
-        with provider.open(config['path']) as file:
+        self._data = data
+        fname = os.path.basename(data['path'])
+        with provider.open(data['path']) as file:
             img = pyglet.image.load(fname, file=file)
         self._img_width = img.width
         self._img_height = img.height
@@ -48,29 +48,29 @@ class Fragment(object):
 
     @property
     def position(self) -> (float, float):
-        return self._config.get('position', (0, 0))
+        return self._data.get('position', (0, 0))
 
     @property
     def type(self) -> str:
-        return self._config['type']
+        return self._data['type']
 
     @property
     def player(self):
-        return self._config.get('player', None)
+        return self._data.get('player', None)
 
     @property
     def width(self) -> float:
-        if 'width' in self._config:
-            return self._config['width']
+        if 'width' in self._data:
+            return self._data['width']
         else:
-            return self.sprite.width / self._config['resolution']
+            return self.sprite.width / self._data['resolution']
 
     @property
     def height(self) -> float:
-        if 'height' in self._config:
-            return self._config['height']
+        if 'height' in self._data:
+            return self._data['height']
         else:
-            return self._img_height / self._config['resolution']
+            return self._img_height / self._data['resolution']
 
     @property
     def size(self) -> (float, float):
@@ -78,8 +78,8 @@ class Fragment(object):
 
     @property
     def resolution(self) -> float:
-        if 'resolution' in self._config:
-            return self._config['resolution']
+        if 'resolution' in self._data:
+            return self._data['resolution']
         else:
             return self._img_width / self.width
 
@@ -92,62 +92,61 @@ class Token(object):
     the same `Fragment`, but separate Token.
     """
 
-    def __init__(self, config, fragment, dispatcher):
-        self._config = config
+    def __init__(self, data, fragment, dispatcher):
+        self._data = data
         self.fragment = fragment
         self._dispatcher = dispatcher
-        self._dispatcher.register_event_type('on_token_updated')
 
     def _update(self):
         self._dispatcher.dispatch_event('on_token_updated', self)
 
-    def update_config(self, config):
-        self._config = config
+    def update_data(self, data):
+        self._data = data
 
     @property
     def position(self):
-        return self._config.get('position', self.fragment.position)
+        return self._data.get('position', self.fragment.position)
 
     @property
     def type(self):
-        return self._config.get('type', self.fragment.type)
+        return self._data.get('type', self.fragment.type)
 
     @property
     def player(self):
-        return self._config.get('player', self.fragment.player)
+        return self._data.get('player', self.fragment.player)
 
     @property
     def is_token(self):
         return self.type.startswith('token')
 
     def set_position(self, x, y):
-        self._config['position'] = (x, y)
+        self._data['position'] = (x, y)
         self._update()
 
     @property
     def id(self):
-        return self._config['id']
+        return self._data['id']
 
     def controlled_by(self, player):
         return player is None or player == self.player
 
     def move(self, dx, dy):
-        x, y = self._config['position']
-        self._config['position'] = (x + dx, y + dy)
+        x, y = self._data['position']
+        self._data['position'] = (x + dx, y + dy)
         self._update()
 
     def align_to_grid(self):
-        x, y = self._config['position']
+        x, y = self._data['position']
         x, y = round(x), round(y)
-        self._config['position'] = (x, y)
+        self._data['position'] = (x, y)
         self._update()
 
 
 class Page(object):
-    def __init__(self, config, campaign):
-        self._config = config
+    def __init__(self, data, campaign):
+        self._data = data
         self.tokens = []
-        for token_cfg in config['tokens']:
+        for token_cfg in data['tokens']:
             token = Token(token_cfg,
                           campaign.fragments[token_cfg['fragment_id']],
                           campaign)
@@ -155,13 +154,16 @@ class Page(object):
 
 
 class Campaign(pyglet.event.EventDispatcher):
-    def __init__(self, resource_provider):
+    def __init__(self, resource_provider, player):
+        self.register_event_type('on_token_updated')
+        self.register_event_type('on_page_changed')
+        self._player = player
         self._resource_provider = resource_provider
         with resource_provider.open('data.json') as data:
             self._data = json.load(data)
         self.fragments = {}
-        for id, frag_config in self._data['fragments'].items():
-            self.fragments[id] = Fragment(frag_config, self._resource_provider, id)
+        for id, frag_data in self._data['fragments'].items():
+            self.fragments[id] = Fragment(frag_data, self._resource_provider, id)
         self.pages = []
         self.tokens = {}
         for page_cfg in self._data['pages']:
@@ -169,11 +171,18 @@ class Campaign(pyglet.event.EventDispatcher):
             self.pages.append(page)
             for token in page.tokens:
                 self.tokens[token.id] = token
-        self._current_page = 0
+
+    @property
+    def master_page(self):
+        return self._data['master_page']
 
     @property
     def current_page(self):
-        return self.pages[self._current_page]
+        if self._player is None:
+            idx = self._data['master_page']
+        else:
+            idx = self._data['players_page']
+        return self.pages[idx]
 
     def find_token(self, x, y) -> Token:
         for token in self.current_page.tokens:
@@ -185,12 +194,17 @@ class Campaign(pyglet.event.EventDispatcher):
         return None
 
     def next_page(self):
-        if self._current_page + 1 < len(self.pages):
-            self._current_page += 1
+        if (self._player is None and
+            self._data['master_page'] + 1 < len(self.pages)):
+            self._data['master_page'] += 1
 
     def prev_page(self):
-        if self._current_page > 0:
-            self._current_page -= 1
+        if self._player is None and self._data['master_page'] > 0:
+            self._data['master_page'] -= 1
+
+    def set_players_page(self, i):
+        self._data['players_page'] = i
+        self.dispatch_event('on_page_changed', i)
 
 
 class Map(object):
@@ -364,6 +378,8 @@ class Manager(object):
         elif symbol == key.PAGEUP and self.is_master:
             self.campaign.prev_page()
             self.map.scale_to_fit(self.window.width, self.window.height)
+        elif symbol == key.P and self.is_master:
+            self.campaign.set_players_page(self.campaign.master_page)
         else:
             return
 
@@ -418,26 +434,41 @@ class Manager(object):
             self._dragging_token = None
 
     def on_api_request(self, request, client_address):
-        print('on_api_request', request, 'from', client_address)
         method = request['method']
+        print('on_api_request', method, 'from', client_address)
         params = request['params']
         if method == 'hi':
             print('Adding player {} at address {}'.format(
-                params['name'], client_address))
+                params['player'], client_address))
             self.api_server.add_player(client_address)
         elif method == 'update_token':
             token = params['token']
-            self.campaign.tokens[token['id']].update_config(token)
+            self.campaign.tokens[token['id']].update_data(token)
+        elif method == 'page_changed':
+            self.campaign.set_players_page(params['players_page'])
+            self.map.scale_to_fit(self.window.width, self.window.height)
+        else:
+            print('Unknown API request:', request, 'from', client_address)
 
     def on_token_updated(self, token):
-        print('on_token_updated:', token._config)
+        print('on_token_updated:', token._data)
         notification = {
             'method': 'update_token',
             'params': {
-                'token': token._config
+                'token': token._data
             }
         }
+        self.api_server.notify(notification)
 
+    def on_page_changed(self, players_page):
+        if not self.is_master: return
+        print('on_page_changed', players_page)
+        notification = {
+            'method': 'page_changed',
+            'params': {
+                'players_page': players_page
+            }
+        }
         self.api_server.notify(notification)
 
 
@@ -450,7 +481,7 @@ def master_main(campaign_dir):
     api_server = apiserver.ApiServer(window)
 
     resource_provider = LocalResourceProvider(campaign_dir)
-    campaign = Campaign(resource_provider)
+    campaign = Campaign(resource_provider, None)
     manager = Manager(window, campaign, api_server, None)
 
     pyglet.app.run()
@@ -461,7 +492,7 @@ def master_main(campaign_dir):
     res_server.join()
 
 
-def player_main(address, name):
+def player_main(address, player):
     address = ipaddress.ip_address(address)
     assert address.version == 6
     master_address = address.exploded
@@ -472,13 +503,13 @@ def player_main(address, name):
     request = {
         'id': 1,
         'method': 'hi',
-        'params': {'name': name}
+        'params': {'player': player}
     }
     api_server.send(request)
 
     resource_provider = RemoteResourceProvider(master_address)
-    campaign = Campaign(resource_provider)
-    manager = Manager(window, campaign, api_server, name)
+    campaign = Campaign(resource_provider, player)
+    manager = Manager(window, campaign, api_server, player)
 
     pyglet.app.run()
 

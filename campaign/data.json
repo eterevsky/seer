@@ -49,5 +49,7 @@
             "player": "El",
             "type": "token-char"
         }
-    }
+    },
+    "master_page": 0,
+    "players_page": 0
 }
