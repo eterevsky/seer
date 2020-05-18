@@ -1,5 +1,6 @@
 """The representation of the game state."""
 
+import datetime
 import json
 import os.path
 import pyglet
@@ -129,6 +130,7 @@ class Page(object):
 
 
 class Campaign(pyglet.event.EventDispatcher):
+
     def __init__(self, resource_provider, player):
         self.register_event_type('on_token_updated')
         self.register_event_type('on_page_changed')
@@ -136,6 +138,10 @@ class Campaign(pyglet.event.EventDispatcher):
         self._resource_provider = resource_provider
         with resource_provider.open('data.json') as data:
             self._data = json.load(data)
+        if resource_provider.can_save:
+            backup_fname = 'backups/data-{}.json'.format(
+                datetime.datetime.now().strftime('%Y-%m-%dT%H%M%S'))
+            resource_provider.copy_file('data.json', backup_fname)
         self.fragments = {}
         for id, frag_data in self._data['fragments'].items():
             self.fragments[id] = Fragment(frag_data, self._resource_provider, id)
@@ -180,3 +186,7 @@ class Campaign(pyglet.event.EventDispatcher):
     def set_players_page(self, i):
         self._data['players_page'] = i
         self.dispatch_event('on_page_changed', i)
+
+    def save(self):
+        with self._resource_provider.open_write('data.json') as wfile:
+            json.dump(self._data, wfile, indent=2, sort_keys=True)

@@ -52,7 +52,7 @@ but should also work on Windows and Linux. Requires requests and pyglet:
 ## Roadmap
 
 - [x] DM can change the page visible to the players.
-- [ ] Save the campaign state upon exiting.
+- [x] Save the campaign state upon exiting.
 - [ ] Make it possible for DM to hide parts of the map from the players.
 - [ ] Add chat.
 - [ ] Make it possible to roll dice in the chat.

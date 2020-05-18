@@ -4,6 +4,7 @@ import os.path
 import pyglet
 from pyglet.window import key, mouse
 import requests
+import shutil
 import sys
 import time
 
@@ -14,15 +15,29 @@ import resserver
 
 class LocalResourceProvider(object):
     def __init__(self, top_dir):
+        self.can_save = True
         self.top_dir = top_dir
 
     def open(self, path):
-        print('opening', os.path.join(self.top_dir, path))
-        return open(os.path.join(self.top_dir, path), 'rb')
+        path = os.path.join(self.top_dir, path)
+        print('opening', path)
+        return open(path, 'rb')
+
+    def open_write(self, path):
+        path = os.path.join(self.top_dir, path)
+        print('writing', path)
+        return open(path, 'w')
+
+    def copy_file(self, src, dst):
+        src = os.path.join(self.top_dir, src)
+        dst = os.path.join(self.top_dir, dst)
+        print('Backing up the campaign to', dst)
+        shutil.copyfile(src, dst)
 
 
 class RemoteResourceProvider(object):
     def __init__(self, address):
+        self.can_save = False
         self.netloc = 'http://[{}]:{}/'.format(address, resserver.PORT)
 
     def open(self, path):
@@ -308,6 +323,8 @@ def master_main(campaign_dir):
     manager = Manager(window, campaign, api_server, None)
 
     pyglet.app.run()
+
+    campaign.save()
 
     api_server.shutdown()
     res_server.shutdown()
