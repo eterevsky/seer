@@ -68,20 +68,43 @@ class Token(object):
     the same `Fragment`, but separate Token.
     """
 
-    def __init__(self, data, fragment, dispatcher):
+    def __init__(self, data, fragment, campaign):
         self._data = data
         self.fragment = fragment
-        self._dispatcher = dispatcher
+        self._campaign = campaign
+        self._temp_position = None
 
-    def _update(self):
-        self._dispatcher.dispatch_event('on_token_updated', self)
-
-    def update_data(self, data):
+    def update_data(self, data, notify=False):
         self._data = data
+        if notify:
+            self._campaign.dispatch_event('on_token_updated', self)
+
+    @property
+    def id(self):
+        return self._data['id']
+
+    @property
+    def temp_position(self):
+        if self._temp_position is not None:
+            return self._temp_position
+        else:
+            return self.position
+
+    def set_temp_position(self, x, y, notify=True):
+        self._temp_position = (x, y)
+        if notify:
+            self._campaign.dispatch_event(
+                'on_token_temp_position_changed', self.id, self.temp_position)
 
     @property
     def position(self):
         return self._data.get('position', self.fragment.position)
+
+    def set_position(self, x, y, notify=True):
+        self._temp_position = None
+        self._data['position'] = (x, y)
+        if notify:
+            self._campaign.dispatch_event('on_token_updated', self)
 
     @property
     def type(self):
@@ -95,27 +118,18 @@ class Token(object):
     def is_token(self):
         return self.type.startswith('token')
 
-    def set_position(self, x, y):
-        self._data['position'] = (x, y)
-        self._update()
-
-    @property
-    def id(self):
-        return self._data['id']
-
     def controlled_by(self, player):
         return player is None or player == self.player
 
-    def move(self, dx, dy):
-        x, y = self._data['position']
-        self._data['position'] = (x + dx, y + dy)
-        self._update()
+    def move_temp(self, dx, dy):
+        x, y = self.temp_position
+        self.set_temp_position(x + dx, y + dy)
 
-    def align_to_grid(self):
-        x, y = self._data['position']
-        x, y = round(x), round(y)
-        self._data['position'] = (x, y)
-        self._update()
+    def position_from_temp(self, align=False):
+        x, y = self.temp_position
+        if align:
+            x, y = round(x), round(y)
+        self.set_position(x, y)
 
 
 class Page(object):
@@ -149,6 +163,7 @@ class Campaign(pyglet.event.EventDispatcher):
 
     def __init__(self, resource_provider, player):
         self.register_event_type('on_token_updated')
+        self.register_event_type('on_token_temp_position_changed')
         self.register_event_type('on_page_changed')
         self.register_event_type('on_veils_updated')
         self._player = player

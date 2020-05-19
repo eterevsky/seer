@@ -57,7 +57,7 @@ but should also work on Windows and Linux. Requires requests and pyglet:
 - [x] DM can change the page visible to the players.
 - [x] Save the campaign state upon exiting.
 - [x] Make it possible for DM to hide parts of the map from the players.
-- [ ] Distinguish between dragging a character and finishing its movement.
+- [x] Distinguish between dragging a character and finishing its movement.
 - [ ] Add chat.
 - [ ] Make it possible to roll dice in the chat.
 - [ ] UI for DM to add map tiles and tokens to the campaign.

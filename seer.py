@@ -209,9 +209,8 @@ class Map(object):
         pyglet.gl.glBlendEquation(pyglet.gl.GL_FUNC_ADD)
 
 
-
     def _draw_token(self, token):
-            x, y = token.position
+            x, y = token.temp_position
             screen_x, screen_y = self.map_to_screen(x, y)
             token.fragment.sprite.update(
                 x=screen_x, y=screen_y,
@@ -342,14 +341,14 @@ class Manager(object):
             return
 
         dx, dy = self.map.screen_to_map_delta(screen_dx, screen_dy)
-        self._dragging_token.move(dx, dy)
+        self._dragging_token.move_temp(dx, dy)
 
         return True
 
     def on_mouse_release(self, x, y, button, modifiers):
         if button == mouse.LEFT and self._dragging_token is not None:
-            if modifiers & (key.LSHIFT | key.RSHIFT):
-                self._dragging_token.align_to_grid()
+            align = modifiers & (key.LSHIFT | key.RSHIFT)
+            self._dragging_token.position_from_temp(align=align)
             self._dragging_token = None
 
     def on_api_request(self, request, client_address):
@@ -362,7 +361,16 @@ class Manager(object):
             self.api_server.add_player(client_address)
         elif method == 'update_token':
             token = params['token']
-            self.campaign.tokens[token['id']].update_data(token)
+            self.campaign.tokens[token['id']].update_data(
+                token, notify=self.is_master)
+        elif method == 'token_temp_position_changed':
+            token = self.campaign.tokens[params['token_id']]
+            position = params['position']
+            if token is not self._dragging_token:
+                token.set_temp_position(
+                    position[0], position[1], notify=self.is_master)
+            else:
+                print('ignored')
         elif method == 'page_changed':
             self.campaign.set_players_page(params['players_page'])
             self.map.scale_to_fit(self.window.width, self.window.height)
@@ -382,6 +390,18 @@ class Manager(object):
             }
         }
         self.api_server.notify(notification)
+
+    def on_token_temp_position_changed(self, token_id, position):
+        print('on_token_temp_position_changed:', token_id, position)
+        notification = {
+            'method': 'token_temp_position_changed',
+            'params': {
+                'token_id': token_id,
+                'position': position
+            }
+        }
+        self.api_server.notify(notification)
+
 
     def on_page_changed(self, players_page):
         if not self.is_master: return
