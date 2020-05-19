@@ -119,8 +119,10 @@ class Token(object):
 
 
 class Page(object):
-    def __init__(self, data, campaign):
+    def __init__(self, id, data, campaign):
+        self._id = id
         self._data = data
+        self._dispatcher = campaign
         self.tokens = []
         for token_cfg in data['tokens']:
             token = Token(token_cfg,
@@ -132,12 +134,23 @@ class Page(object):
     def veils(self):
         return self._data.get('veils', [])
 
+    def set_veils(self, veils):
+        self._data['veils'] = veils
+
+    def toggle_veil(self, x, y):
+        for veil in self.veils:
+            if (veil['minx'] < x < veil['maxx'] and
+                veil['miny'] < y < veil['maxy']):
+                veil['covered'] = not veil['covered']
+        self._dispatcher.dispatch_event('on_veils_updated', self._id, self.veils)
+
 
 class Campaign(pyglet.event.EventDispatcher):
 
     def __init__(self, resource_provider, player):
         self.register_event_type('on_token_updated')
         self.register_event_type('on_page_changed')
+        self.register_event_type('on_veils_updated')
         self._player = player
         self._resource_provider = resource_provider
         with resource_provider.open('data.json') as data:
@@ -151,8 +164,8 @@ class Campaign(pyglet.event.EventDispatcher):
             self.fragments[id] = Fragment(frag_data, self._resource_provider, id)
         self.pages = []
         self.tokens = {}
-        for page_cfg in self._data['pages']:
-            page = Page(page_cfg, self)
+        for (i, page_cfg) in enumerate(self._data['pages']):
+            page = Page(i, page_cfg, self)
             self.pages.append(page)
             for token in page.tokens:
                 self.tokens[token.id] = token

@@ -220,11 +220,17 @@ class Map(object):
 
     def draw(self):
         self._update_pan()
+        # Draw non-player tokens
         for token in self._campaign.current_page.tokens:
-            self._draw_token(token)
+            if token.player is None:
+                self._draw_token(token)
         self._draw_veils()
         if self._show_grid:
             self._draw_grid()
+        # Draw player tokens
+        for token in self._campaign.current_page.tokens:
+            if token.player is not None:
+                self._draw_token(token)
 
 
 class Manager(object):
@@ -316,6 +322,12 @@ class Manager(object):
             return
 
         x, y = self.map.screen_to_map(screenx, screeny)
+
+        if modifiers & key.MOD_ACCEL:
+            if self.is_master:
+                self.campaign.current_page.toggle_veil(x, y)
+            return
+
         token = self.campaign.find_token(x, y)
         if token is not None and token.controlled_by(self.player):
             self._dragging_token = token
@@ -354,6 +366,10 @@ class Manager(object):
         elif method == 'page_changed':
             self.campaign.set_players_page(params['players_page'])
             self.map.scale_to_fit(self.window.width, self.window.height)
+        elif method == 'veils_updated':
+            page_id = params['page_id']
+            veils = params['veils']
+            self.campaign.pages[page_id].set_veils(veils)
         else:
             print('Unknown API request:', request, 'from', client_address)
 
@@ -374,6 +390,17 @@ class Manager(object):
             'method': 'page_changed',
             'params': {
                 'players_page': players_page
+            }
+        }
+        self.api_server.notify(notification)
+
+    def on_veils_updated(self, page_id, veils):
+        print('on_veils_updated, page', page_id)
+        notification = {
+            'method': 'veils_updated',
+            'params': {
+                'page_id': page_id,
+                'veils': veils
             }
         }
         self.api_server.notify(notification)

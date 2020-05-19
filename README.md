@@ -10,6 +10,8 @@
 * Serverless, DM's computer acts as a server.
 * Requires IPv6 to avoid dealing with NAT.
 * The campaign is specified by a JSON file. No editing functionality yet.
+* Campaign can contain several maps ("pages").
+* DM can hide/reveal some parts of the map to the players.
 
 ## Run
 
@@ -48,12 +50,13 @@ but should also work on Windows and Linux. Requires requests and pyglet:
 | Shift + mouse drag | Align to grid after move.                          |
 | PgUp, PgDn         | Turn to the previous/next page (DM only).          |
 | P                  | Bring players to the current map (DM only).        |
+| Cmd/Ctrl + click   | Cover/reveal a zone on the map (DM only).          |
 
 ## Roadmap
 
 - [x] DM can change the page visible to the players.
 - [x] Save the campaign state upon exiting.
-- [ ] Make it possible for DM to hide parts of the map from the players.
+- [x] Make it possible for DM to hide parts of the map from the players.
 - [ ] Distinguish between dragging a character and finishing its movement.
 - [ ] Add chat.
 - [ ] Make it possible to roll dice in the chat.
