@@ -54,6 +54,7 @@ but should also work on Windows and Linux. Requires requests and pyglet:
 - [x] DM can change the page visible to the players.
 - [x] Save the campaign state upon exiting.
 - [ ] Make it possible for DM to hide parts of the map from the players.
+- [ ] Distinguish between dragging a character and finishing its movement.
 - [ ] Add chat.
 - [ ] Make it possible to roll dice in the chat.
 - [ ] UI for DM to add map tiles and tokens to the campaign.
@@ -63,7 +64,7 @@ but should also work on Windows and Linux. Requires requests and pyglet:
 - [ ] Make it possible to indicate a point on the map.
 - [ ] Support IPv4
 
-## Acknoledgements
+## Acknowledgements
 
 The assets in the example campaign are from
 [2minutetabletop.com](https://2minutetabletop.com/), and are used in accordance

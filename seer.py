@@ -57,6 +57,8 @@ class Map(object):
         self._pan_speed_y = 0
         self._show_grid = True
         self._last_pan_update = time.time()
+        self.show_veils = False
+        self._veil_lines = []
 
     def _bounding_box(self):
         minx, maxx = 1E6, -1E6
@@ -154,6 +156,60 @@ class Map(object):
         draw_lines(lambda x: x % 10 == 5, 2)
         draw_lines(lambda x: x % 10 == 0, 3)
 
+        if self._veil_lines:
+            pyglet.gl.glLineWidth(2)
+            colors = [255, 255, 255] * (len(self._veil_lines) // 2 )
+            pyglet.graphics.draw(len(self._veil_lines) // 2, pyglet.gl.GL_LINES,
+                ('v2f', self._veil_lines),
+                ('c3B', colors)
+            )
+
+    def _draw_veils(self):
+        triangles = []
+        colors = []
+        if not self._campaign.is_master or not self.show_veils:
+            self._veil_lines = []
+
+        for veil in self._campaign.current_page.veils:
+            if (not veil['covered'] and
+                (not self._campaign.is_master or
+                 not self.show_veils)): continue
+            minx, miny = self.map_to_screen(veil['minx'], veil['miny'])
+            maxx, maxy = self.map_to_screen(veil['maxx'], veil['maxy'])
+            triangles.extend([
+                minx, miny, maxx, miny, maxx, maxy,
+                minx, maxy, minx, miny, maxx, maxy
+            ])
+            if self._campaign.is_master:
+                if veil['covered']:
+                    if self.show_veils:
+                        colors.extend([128] * 18)
+                    else:
+                        colors.extend([64] * 18)
+                else:
+                    colors.extend([64] * 18)
+                if self.show_veils:
+                    self._veil_lines.extend([
+                        minx, miny, maxx, miny,
+                        maxx, miny, maxx, maxy,
+                        maxx, maxy, minx, maxy,
+                        minx, maxy, minx, miny
+                    ])
+            else:
+                colors.extend([255] * 18)
+
+        pyglet.gl.glEnable(pyglet.gl.GL_BLEND)
+        pyglet.gl.glBlendFunc(pyglet.gl.GL_ONE, pyglet.gl.GL_ONE)
+        pyglet.gl.glBlendEquation(pyglet.gl.GL_FUNC_REVERSE_SUBTRACT)
+
+        pyglet.graphics.draw(len(triangles) // 2, pyglet.gl.GL_TRIANGLES,
+            ('v2f', triangles),
+            ('c3B', colors))
+        pyglet.gl.glDisable(pyglet.gl.GL_BLEND)
+        pyglet.gl.glBlendEquation(pyglet.gl.GL_FUNC_ADD)
+
+
+
     def _draw_token(self, token):
             x, y = token.position
             screen_x, screen_y = self.map_to_screen(x, y)
@@ -166,6 +222,7 @@ class Map(object):
         self._update_pan()
         for token in self._campaign.current_page.tokens:
             self._draw_token(token)
+        self._draw_veils()
         if self._show_grid:
             self._draw_grid()
 
@@ -198,6 +255,12 @@ class Manager(object):
         self.map.draw()
 
     def on_key_press(self, symbol, modifier):
+        if self.is_master:
+            if modifier & key.MOD_ACCEL:
+                self.map.show_veils = True
+            else:
+                self.map.show_veils = False
+
         if symbol == key.F:
             self.window.set_fullscreen(not self.window.fullscreen)
         elif symbol == key.W:
@@ -226,6 +289,12 @@ class Manager(object):
         return True
 
     def on_key_release(self, symbol, modifier):
+        if self.is_master:
+            if modifier & key.MOD_ACCEL:
+                self.map.show_veils = True
+            else:
+                self.map.show_veils = False
+
         if symbol in (key.A, key.D):
             self.map.pan_horizontal(0)
         elif symbol in (key.W, key.S):

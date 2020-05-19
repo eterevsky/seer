@@ -128,6 +128,10 @@ class Page(object):
                           campaign)
             self.tokens.append(token)
 
+    @property
+    def veils(self):
+        return self._data.get('veils', [])
+
 
 class Campaign(pyglet.event.EventDispatcher):
 
@@ -152,6 +156,10 @@ class Campaign(pyglet.event.EventDispatcher):
             self.pages.append(page)
             for token in page.tokens:
                 self.tokens[token.id] = token
+
+    @property
+    def is_master(self) -> bool:
+        return self._player is None
 
     @property
     def master_page(self):

@@ -47,17 +47,33 @@
           "fragment_id": "hero-1",
           "id": 2,
           "position": [
-            7,
-            11
+            8,
+            12
           ]
         },
         {
           "fragment_id": "hero-2",
           "id": 3,
           "position": [
-            19,
-            10
+            13,
+            20
           ]
+        }
+      ],
+      "veils": [
+        {
+          "covered": true,
+          "maxx": 7,
+          "maxy": 21,
+          "minx": 3,
+          "miny": 15
+        },
+        {
+          "covered": false,
+          "maxx": 17,
+          "maxy": 21,
+          "minx": 13,
+          "miny": 15
         }
       ]
     },
