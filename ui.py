@@ -170,13 +170,7 @@ class StackLayout(object):
         content_dim = sum(d or 0 for d in content_dims)
         extra_dim = max(dim - content_dim, 0)
 
-        print('count_greedy', count_greedy)
-        print('content_dim', content_dim)
-        print('extra_dim', extra_dim)
-        print('content_dims', content_dims)
-
         for child, dim in zip(self.children, content_dims):
-            print('offset', offset)
             if dim is None:
                 d = extra_dim / count_greedy
             else:
