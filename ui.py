@@ -19,6 +19,10 @@ class Pane(pyglet.event.EventDispatcher):
         self.height = None
         self.background = background
 
+    @property
+    def materialized(self):
+        return self.width is not None
+
     def _prepare_draw(self):
         if self.background is None or self.width is None:
             return
@@ -33,7 +37,7 @@ class Pane(pyglet.event.EventDispatcher):
 
         self._colors = self.background * 6
 
-    def on_draw(self):
+    def draw_background(self):
         if self.background is None:
             return
 
@@ -41,6 +45,9 @@ class Pane(pyglet.event.EventDispatcher):
             6, pyglet.gl.GL_TRIANGLES,
             ('v2f', self._triangles),
             ('c3B', self._colors))
+
+    def on_draw(self):
+        self.draw_background()
 
     def on_resize(self, width, height, offset_x, offset_y):
         self.offset_x = offset_x
@@ -55,6 +62,7 @@ class Pane(pyglet.event.EventDispatcher):
 
 
 Pane.register_event_type('on_draw')
+Pane.register_event_type('on_mouse_drag')
 Pane.register_event_type('on_mouse_enter')
 Pane.register_event_type('on_mouse_leave')
 Pane.register_event_type('on_mouse_press')
@@ -80,6 +88,8 @@ class StackLayout(object):
         self._resize()
         self.parent.push_handlers(self)
         self.mouseover_child = None
+        self._dragging_child = None
+        self._dragging_button = 0
 
     @property
     def offset_x(self):
@@ -104,14 +114,23 @@ class StackLayout(object):
             self.mouseover_child = None
             return child.dispatch_event('on_mouse_leave', x, y)
 
+    def on_mouse_drag(self, x, y, dx, dy, buttons, modifiers):
+        if self._dragging_child is None:
+            self._dragging_button = buttons
+            self._dragging_child = self._find_child(x, y)
+
+        self._dragging_child.dispatch_event(
+            'on_mouse_drag', x, y, dx, dy, buttons, modifiers)
+
     def on_mouse_motion(self, x, y, dx, dy):
         child = self._find_child(x, y)
         if child is not self.mouseover_child:
             if self.mouseover_child is not None:
                 self.mouseover_child.dispatch_event('on_mouse_leave', x, y)
             self.mouseover_child = child
-            child.dispatch_event('on_mouse_enter', x, y)
-        if child:
+            if child is not None:
+                child.dispatch_event('on_mouse_enter', x, y)
+        if child is not None:
             return child.dispatch_event('on_mouse_motion', x, y, dx, dy)
 
     def on_mouse_press(self, x, y, button, modifiers):
@@ -120,6 +139,9 @@ class StackLayout(object):
             return child.dispatch_event('on_mouse_press', x, y, button, modifiers)
 
     def on_mouse_release(self, x, y, button, modifiers):
+        if button & self._dragging_button:
+            self._dragging_child = None
+            self._dragging_button = 0
         child = self._find_child(x, y)
         if child:
             return child.dispatch_event('on_mouse_release', x, y, button, modifiers)

@@ -11,6 +11,7 @@ import time
 import apiserver
 from campaign import Campaign
 import resserver
+import ui
 
 
 class LocalResourceProvider(object):
@@ -46,8 +47,12 @@ class RemoteResourceProvider(object):
 
 
 class Map(object):
-    def __init__(self, campaign):
+    def __init__(self, campaign, player):
         self._campaign = campaign
+        self.player = player
+        self.pane = ui.Pane(background=(0, 0, 0))
+        self.pane.push_handlers(self)
+        self._dragging_token = None
         self._tx = 0
         self._ty = 0
         self._scale = 70
@@ -84,25 +89,25 @@ class Map(object):
     def map_to_screen(self, x, y):
         return x * self._scale + self._tx, y * self._scale + self._ty
 
-    def scale_to_fit(self, screen_width, screen_height):
+    def scale_to_fit(self, pane_width, pane_height, offset_x, offset_y):
+        if not self.pane.materialized: return
         if not self._campaign.fragments:
             self._tx = 0
             self._ty = 0
             self._scale = 70
             return
 
-        self._screen_width = screen_width
-        self._screen_height = screen_height
-
         minx, maxx, miny, maxy = self._bounding_box()
 
         width = maxx - minx
         height = maxy - miny
-        scalex = screen_width / width
-        scaley = screen_height / height
+        scalex = pane_width / width
+        scaley = pane_height / height
         self._scale = min(scalex, scaley)
-        self._tx = (screen_width - width * self._scale) / 2 - minx * self._scale
-        self._ty = (screen_height - height * self._scale) / 2 - miny * self._scale
+        self._tx = ((pane_width - width * self._scale) / 2 -
+                    minx * self._scale + offset_x)
+        self._ty = ((pane_height - height * self._scale) / 2 -
+                    miny * self._scale + offset_y)
 
     def zoom(self, screen_x, screen_y, zoom):
         self._scale *= zoom
@@ -127,10 +132,12 @@ class Map(object):
         self._show_grid = not self._show_grid
 
     def _draw_grid(self):
-        w, h = self._screen_width, self._screen_height
+        w, h = self.pane.width, self.pane.height
+        x0, y0 = self.pane.offset_x, self.pane.offset_y
+        x1, y1 = x0 + w, y0 + h
 
-        minx, miny = self.screen_to_map(0, 0)
-        maxx, maxy = self.screen_to_map(w, h)
+        minx, miny = self.screen_to_map(x0, y0)
+        maxx, maxy = self.screen_to_map(x1, y1)
 
         def draw_lines(check, width):
             lines = []
@@ -138,12 +145,14 @@ class Map(object):
             for x in range(math.ceil(minx), math.floor(maxx) + 1):
                 if not check(x): continue
                 screenx, _ = self.map_to_screen(x, 0)
-                lines.extend([screenx, 0, screenx, h])
+                lines.extend([screenx, y0,
+                              screenx, y1])
 
             for y in range(math.ceil(miny), math.floor(maxy) + 1):
                 if not check(y): continue
                 _, screeny = self.map_to_screen(0, y)
-                lines.extend([0, screeny, w, screeny])
+                lines.extend([x0, screeny,
+                              x1, screeny])
 
             colors = [127, 127, 127] * (len(lines) // 2)
             pyglet.gl.glLineWidth(width)
@@ -167,8 +176,7 @@ class Map(object):
     def _draw_veils(self):
         triangles = []
         colors = []
-        if not self._campaign.is_master or not self.show_veils:
-            self._veil_lines = []
+        self._veil_lines = []
 
         for veil in self._campaign.current_page.veils:
             if (not veil['covered'] and
@@ -208,7 +216,6 @@ class Map(object):
         pyglet.gl.glDisable(pyglet.gl.GL_BLEND)
         pyglet.gl.glBlendEquation(pyglet.gl.GL_FUNC_ADD)
 
-
     def _draw_token(self, token):
             x, y = token.temp_position
             screen_x, screen_y = self.map_to_screen(x, y)
@@ -217,7 +224,9 @@ class Map(object):
                 scale=self._scale/token.fragment.resolution)
             token.fragment.sprite.draw()
 
-    def draw(self):
+    def on_draw(self):
+        if not self.pane.materialized: return
+        self.pane.draw_background()
         self._update_pan()
         # Draw non-player tokens
         for token in self._campaign.current_page.tokens:
@@ -231,6 +240,57 @@ class Map(object):
             if token.player is not None:
                 self._draw_token(token)
 
+        return True
+
+    def on_resize(self, width, height, offset_x, offset_y):
+        print('on_resize', width, height, offset_x, offset_y)
+        self.scale_to_fit(width, height, offset_x, offset_y)
+
+    def on_mouse_scroll(self, x, y, scroll_x, scroll_y):
+        self.zoom(x, y, 1.1 ** (-scroll_y))
+
+    def on_mouse_press(self, screenx, screeny, button, modifiers):
+        if button != mouse.LEFT:
+            print('left button not pressed')
+            return
+
+        x, y = self.screen_to_map(screenx, screeny)
+
+        if modifiers & key.MOD_ACCEL:
+            if self._campaign.is_master:
+                self._campaign.current_page.toggle_veil(x, y)
+            return
+
+        token = self._campaign.find_token(x, y)
+        if token is not None and token.controlled_by(self.player):
+            print('Start draggin token', token)
+            self._dragging_token = token
+            tx, ty = token.position
+            self._dragging_token_offset = (x - tx, y - ty)
+
+    def on_mouse_drag(self, screen_x, screen_y, dx, dy, buttons, modifiers):
+        if self._dragging_token is None: return
+        if not (buttons & mouse.LEFT):
+            print('left button not pressed')
+            return
+        if not self.pane.contains(screen_x, screen_y):
+            print('existed the pane')
+            return
+
+        x, y = self.screen_to_map(screen_x, screen_y)
+        ox, oy = self._dragging_token_offset
+        tx, ty = x - ox, y - oy
+
+        self._dragging_token.set_temp_position(tx, ty)
+        return True
+
+    def on_mouse_release(self, x, y, button, modifiers):
+        if button == mouse.LEFT and self._dragging_token is not None:
+            align = modifiers & (key.LSHIFT | key.RSHIFT)
+            self._dragging_token.position_from_temp(align=align)
+            self._dragging_token = None
+
+
 
 class Manager(object):
     def __init__(self, window, campaign, api_server, player):
@@ -238,12 +298,14 @@ class Manager(object):
         self.campaign.push_handlers(self)
         self.window = window
         self.window.push_handlers(self)
-        self.map = Map(campaign)
-        self.map.scale_to_fit(window.width, window.height)
+        self.map = Map(campaign, player)
+
+        sidebar = ui.Pane(content_width=200, background=(64, 64, 64))
+        self.layout = ui.StackLayout(
+            ui.Orientation.HORIZONTAL, window, (sidebar, self.map.pane))
+
         self.api_server = api_server
         self.player = player
-        # self.api_server.push_handlers(self)
-        self._dragging_token = None
         # Make sure that on_draw is called regularly.
         pyglet.clock.schedule_interval(lambda _: None, 1 / 120)
 
@@ -254,10 +316,6 @@ class Manager(object):
     @property
     def pan_speed(self):
         return max(self.window.width, self.window.height)
-
-    def on_draw(self):
-        self.window.clear()
-        self.map.draw()
 
     def on_key_press(self, symbol, modifier):
         if self.is_master:
@@ -309,48 +367,6 @@ class Manager(object):
 
         return True
 
-    def on_resize(self, width, height):
-        self.map.scale_to_fit(width, height)
-
-    def on_mouse_scroll(self, x, y, scroll_x, scroll_y):
-        self.map.zoom(x, y, 1.1 ** (-scroll_y))
-
-    def on_mouse_press(self, screenx, screeny, button, modifiers):
-        if button != mouse.LEFT:
-            print('left button not pressed')
-            return
-
-        x, y = self.map.screen_to_map(screenx, screeny)
-
-        if modifiers & key.MOD_ACCEL:
-            if self.is_master:
-                self.campaign.current_page.toggle_veil(x, y)
-            return
-
-        token = self.campaign.find_token(x, y)
-        if token is not None and token.controlled_by(self.player):
-            self._dragging_token = token
-
-    def on_mouse_drag(self, screenx, screeny, screen_dx, screen_dy, buttons, modifiers):
-        if not (buttons & mouse.LEFT):
-            print('left button not pressed')
-            return
-
-        if self._dragging_token is None:
-            print('No currently draggable token')
-            return
-
-        dx, dy = self.map.screen_to_map_delta(screen_dx, screen_dy)
-        self._dragging_token.move_temp(dx, dy)
-
-        return True
-
-    def on_mouse_release(self, x, y, button, modifiers):
-        if button == mouse.LEFT and self._dragging_token is not None:
-            align = modifiers & (key.LSHIFT | key.RSHIFT)
-            self._dragging_token.position_from_temp(align=align)
-            self._dragging_token = None
-
     def on_api_request(self, request, client_address):
         method = request['method']
         print('on_api_request', method, 'from', client_address)
@@ -366,7 +382,7 @@ class Manager(object):
         elif method == 'token_temp_position_changed':
             token = self.campaign.tokens[params['token_id']]
             position = params['position']
-            if token is not self._dragging_token:
+            if token is not self.map._dragging_token:
                 token.set_temp_position(
                     position[0], position[1], notify=self.is_master)
             else:
@@ -401,7 +417,6 @@ class Manager(object):
             }
         }
         self.api_server.notify(notification)
-
 
     def on_page_changed(self, players_page):
         if not self.is_master: return
