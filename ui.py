@@ -10,7 +10,8 @@ class Pane(pyglet.event.EventDispatcher):
     negotiates with the owning layout its size and location in the window.
     """
 
-    def __init__(self, content_width=None, content_height=None, background=None):
+    def __init__(self, content=None, content_width=None, content_height=None,
+                 background=None):
         self.content_width = content_width
         self.content_height = content_height
         self.offset_x = None
@@ -46,9 +47,11 @@ class Pane(pyglet.event.EventDispatcher):
             ('v2f', self._triangles),
             ('c3B', self._colors))
 
+    @pyglet.event.intercept
     def on_draw(self):
         self.draw_background()
 
+    @pyglet.event.intercept
     def on_resize(self, width, height, offset_x, offset_y):
         self.offset_x = offset_x
         self.offset_y = offset_y
@@ -100,6 +103,7 @@ class StackLayout(object):
         return getattr(self.parent, 'offset_y', 0)
 
     def on_draw(self):
+
         for child in self.children:
             child.dispatch_event('on_draw')
 
@@ -162,7 +166,7 @@ class StackLayout(object):
         elif self.orientation == Orientation.VERTICAL:
             dim = self.parent.height
             content_dims = [child.content_height for child in self.children]
-            offset = self.offset_y
+            offset = self.offset_y + dim
         else:
             raise AttributeError()
 
@@ -178,10 +182,11 @@ class StackLayout(object):
             if self.orientation == Orientation.HORIZONTAL:
                 child.dispatch_event(
                     'on_resize', d, self.parent.height, offset, self.offset_y)
+                offset += d
             else:
+                offset -= d
                 child.dispatch_event(
                     'on_resize', self.parent.width, d, self.offset_x, offset)
-            offset += d
 
     def _find_child(self, x, y):
         """Returns the child contining (x, y) or None."""
@@ -192,3 +197,29 @@ class StackLayout(object):
             if child.contains(x, y):
                 return child
         return None
+
+
+class TextInput(object):
+    def __init__(self, content_width=100, content_height=100, background=None):
+        self.pane = Pane(content_width=content_width, content_height=content_height,
+                         background=background)
+        self.pane.push_handlers(self)
+        self.pane.content = self
+        self.document = pyglet.text.document.UnformattedDocument('')
+        self.layout = pyglet.text.layout.IncrementalTextLayout(
+            self.document, content_width, content_height, multiline=True,
+            wrap_lines=True)
+        self.caret = pyglet.text.caret.Caret(self.layout)
+        self.caret.visible = True
+
+    def on_resize(self, width, height, offset_x, offset_y):
+        self.layout.width = width
+        self.layout.height = height
+        self.layout.x = offset_x
+        self.layout.y = offset_y
+
+    def on_draw(self):
+        self.layout.draw()
+
+    def on_mouse_press(self, x, y, button, modifiers):
+        self.caret.on_mouse_press(x, y, button, modifiers)

@@ -3,6 +3,7 @@ import math
 import os.path
 import pyglet
 from pyglet.window import key, mouse
+from pyglet.event import EVENT_HANDLED, EVENT_UNHANDLED
 import requests
 import shutil
 import sys
@@ -100,11 +101,11 @@ class Manager(object):
         elif symbol == key.P and self.is_master:
             self.campaign.set_players_page(self.campaign.master_page)
         else:
-            return
+            return EVENT_UNHANDLED
 
         # Unless we are in 'else' branch, return True to show that event was
         # consumed.
-        return True
+        return EVENT_HANDLED
 
     def on_key_release(self, symbol, modifier):
         if self.is_master:
