@@ -11,6 +11,7 @@ import time
 
 import apiserver
 from campaign import Campaign
+import chat
 from map import Map
 import resserver
 import ui
@@ -60,9 +61,10 @@ class Manager(object):
         sidebar = ui.StackLayout(
             ui.Orientation.VERTICAL, content_width=200)
         self.layout.add_child(sidebar)
-        sidebar.add_child(ui.Pane(background=(64, 64, 64)))
-        chat_input = ui.TextInput(
-            content_height=200, background=(128, 128, 128))
+
+        chat_text = chat.ChatText(self.campaign)
+        sidebar.add_child(chat_text)
+        chat_input = chat.ChatInput(self.campaign)
         sidebar.add_child(chat_input)
         self.focus_manager.add_input(chat_input)
 

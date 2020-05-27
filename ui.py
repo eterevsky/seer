@@ -223,11 +223,10 @@ class TextInput(Controller):
         super().__init__(content_width=content_width,
                          content_height=content_height,
                          background=background)
-        self.pane.push_handlers(self)
-        self.pane.content = self
+        print('TextInput background', background)
         self.document = pyglet.text.document.UnformattedDocument('')
         self.layout = pyglet.text.layout.IncrementalTextLayout(
-            self.document, content_width, content_height, multiline=True,
+            self.document, content_width or 100, content_height or 100, multiline=True,
             wrap_lines=True)
         self.caret = pyglet.text.caret.Caret(self.layout)
         self.caret.visible = False
@@ -246,6 +245,25 @@ class TextInput(Controller):
 
     def on_return(self):
         pass
+
+
+class Text(Controller):
+    def __init__(self, content_width=100, content_height=100, **kwargs):
+        super().__init__(content_width=content_width, content_height=content_height, **kwargs)
+        self.document = pyglet.text.document.UnformattedDocument('')
+        self.layout = pyglet.text.layout.IncrementalTextLayout(
+            self.document, content_width or 100, content_height or 100, multiline=True,
+            wrap_lines=True
+        )
+
+    def on_resize(self, width, height, offset_x, offset_y):
+        self.layout.width = width
+        self.layout.height = height
+        self.layout.x = offset_x
+        self.layout.y = offset_y
+
+    def on_draw(self):
+        self.layout.draw()
 
 
 class FocusManager(object):

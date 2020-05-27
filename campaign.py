@@ -162,10 +162,6 @@ class Page(object):
 class Campaign(pyglet.event.EventDispatcher):
 
     def __init__(self, resource_provider, player):
-        self.register_event_type('on_token_updated')
-        self.register_event_type('on_token_temp_position_changed')
-        self.register_event_type('on_page_changed')
-        self.register_event_type('on_veils_updated')
         self._player = player
         self._resource_provider = resource_provider
         with resource_provider.open('data.json') as data:
@@ -226,3 +222,18 @@ class Campaign(pyglet.event.EventDispatcher):
     def save(self):
         with self._resource_provider.open_write('data.json') as wfile:
             json.dump(self._data, wfile, indent=2, sort_keys=True)
+
+    def add_chat(self, text):
+        message = {
+            'player': self._player,
+            'text': text
+        }
+        self._data['chat'].append(message)
+        self.dispatch_event('on_new_chat', message)
+
+
+Campaign.register_event_type('on_token_updated')
+Campaign.register_event_type('on_token_temp_position_changed')
+Campaign.register_event_type('on_page_changed')
+Campaign.register_event_type('on_veils_updated')
+Campaign.register_event_type('on_new_chat')
