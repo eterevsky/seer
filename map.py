@@ -6,12 +6,11 @@ import time
 import ui
 
 
-class Map(object):
+class Map(ui.Controller):
     def __init__(self, campaign, player):
+        super().__init__(background=(0, 0, 0))
         self._campaign = campaign
         self.player = player
-        self.pane = ui.Pane(background=(0, 0, 0))
-        self.pane.push_handlers(self)
         self._dragging_token = None
         self._tx = 0
         self._ty = 0
@@ -213,7 +212,6 @@ class Map(object):
         return True
 
     def on_resize(self, width, height, offset_x, offset_y):
-        print('on_resize', width, height, offset_x, offset_y)
         self.scale_to_fit(width, height, offset_x, offset_y)
 
     def on_mouse_scroll(self, x, y, scroll_x, scroll_y):

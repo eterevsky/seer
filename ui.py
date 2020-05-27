@@ -86,6 +86,7 @@ class Controller(object):
         else:
             self.pane = pane
         self.pane.content = self
+        self.pane.push_handlers(self)
 
 
 class Orientation(enum.Enum):
@@ -101,7 +102,6 @@ class StackLayout(Controller):
         super().__init__(parent, **kwargs)
         self.orientation = orientation
         self.children = []
-        self.pane.push_handlers(self)
         self.mouseover_child = None
         self._dragging_child = None
         self._dragging_button = 0
@@ -170,6 +170,7 @@ class StackLayout(Controller):
         self._resize()
 
     def add_child(self, child: Union[Pane, Controller]) -> None:
+        print('add_child', child)
         if isinstance(child, Pane):
             self.children.append(child)
         else:
@@ -232,11 +233,9 @@ class TextInput(Controller):
         self.caret.visible = False
 
     def on_resize(self, width, height, offset_x, offset_y):
-        print('on_resize', width, height, offset_x, offset_y)
         if width <= 0 or height <= 0:
             self.caret.visible = False
             return
-        self.caret.visible = True
         self.layout.width = width
         self.layout.height = height
         self.layout.x = offset_x
@@ -269,10 +268,10 @@ class FocusManager(object):
                 return controller
         return None
 
+    @pyglet.event.intercept
     def on_mouse_press(self, x, y, button, modifiers):
         target = self._find_input(x, y)
         if target is not self._focus and self._focus is not None:
-            print('switch')
             self._focus.caret.visible = False
         self._focus = target
         if target is not None:
@@ -281,7 +280,6 @@ class FocusManager(object):
 
     def on_mouse_motion(self, x, y, dx, dy):
         target = self._find_input(x, y)
-        print('on_mouse_motion', target)
         self.window.set_mouse_cursor(
             None if target is None else self._text_cursor)
 
@@ -305,8 +303,8 @@ class FocusManager(object):
         if not self._focus:
             return pyglet.event.EVENT_UNHANDLED
         if symbol == key.ESCAPE:
-            self._focus = None
             self._focus.caret.visible = False
+            self._focus = None
             return pyglet.event.EVENT_HANDLED
         if symbol == key.ENTER:
             return self._focus.on_return()

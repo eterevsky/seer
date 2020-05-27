@@ -54,11 +54,20 @@ class Manager(object):
         self.campaign.push_handlers(self)
         self.window = window
         self.window.push_handlers(self)
-        self.map = Map(campaign, player)
+        self.focus_manager = ui.FocusManager(window)
 
-        sidebar = ui.Pane(content_width=200, background=(64, 64, 64))
-        self.layout = ui.StackLayout(
-            ui.Orientation.HORIZONTAL, window, (sidebar, self.map.pane))
+        self.layout = ui.StackLayout(ui.Orientation.HORIZONTAL, window)
+        sidebar = ui.StackLayout(
+            ui.Orientation.VERTICAL, content_width=200)
+        self.layout.add_child(sidebar)
+        sidebar.add_child(ui.Pane(background=(64, 64, 64)))
+        chat_input = ui.TextInput(
+            content_height=200, background=(128, 128, 128))
+        sidebar.add_child(chat_input)
+        self.focus_manager.add_input(chat_input)
+
+        self.map = Map(campaign, player)
+        self.layout.add_child(self.map)
 
         self.api_server = api_server
         self.player = player
