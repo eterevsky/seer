@@ -51,9 +51,12 @@ class RemoteResourceProvider(object):
 
 class Manager(object):
     def __init__(self, window, campaign, api_server, player):
-        self.campaign = campaign
-        self.campaign.push_handlers(self)
         self.window = window
+        self.campaign = campaign
+        self.api_server = api_server
+        self.player = player
+
+        self.campaign.push_handlers(self)
         self.window.push_handlers(self)
         self.focus_manager = ui.FocusManager(window)
 
@@ -64,15 +67,12 @@ class Manager(object):
 
         chat_text = chat.ChatText(self.campaign)
         sidebar.add_child(chat_text)
-        chat_input = chat.ChatInput(self.campaign)
+        chat_input = chat.ChatInput(self.campaign, self.api_server, self.focus_manager)
         sidebar.add_child(chat_input)
-        self.focus_manager.add_input(chat_input)
 
         self.map = Map(campaign, player)
         self.layout.add_child(self.map)
 
-        self.api_server = api_server
-        self.player = player
         # Make sure that on_draw is called regularly.
         pyglet.clock.schedule_interval(lambda _: None, 1 / 120)
 
@@ -136,7 +136,8 @@ class Manager(object):
 
     def on_api_request(self, request, client_address):
         method = request['method']
-        print('on_api_request', method, 'from', client_address)
+        print('on_api_request', request)
+        # print('on_api_request', method, 'from', client_address)
         params = request['params']
         if method == 'hi':
             print('Adding player {} at address {}'.format(
@@ -161,6 +162,13 @@ class Manager(object):
             page_id = params['page_id']
             veils = params['veils']
             self.campaign.pages[page_id].set_veils(veils)
+        elif method == 'player_chat':
+            message = params['message']
+            self.campaign.add_chat(message)
+        elif method == 'new_chat':
+            print(request)
+            message = params['message']
+            self.campaign.add_chat(message)
         else:
             print('Unknown API request:', request, 'from', client_address)
 
@@ -207,6 +215,15 @@ class Manager(object):
         }
         self.api_server.notify(notification)
 
+    def on_new_chat(self, message):
+        if not self.is_master: return
+        print('on_new_chat', message)
+        notification = {
+            'method': 'new_chat',
+            'params': {'message': message}
+        }
+        self.api_server.notify(notification)
+
 
 def master_main(campaign_dir):
     ip = requests.get('https://api6.ipify.org').text
@@ -230,14 +247,14 @@ def master_main(campaign_dir):
     res_server.join()
 
 
-def player_main(address, player):
+def player_main(address, player, port):
     address = ipaddress.ip_address(address)
     assert address.version == 6
     master_address = address.exploded
 
     window = pyglet.window.Window(resizable=True)
 
-    api_server = apiserver.ApiServer(window, master_address)
+    api_server = apiserver.ApiServer(window, master_address, port=port)
     request = {
         'id': 1,
         'method': 'hi',
@@ -259,13 +276,16 @@ HELP = """
 Usage:
     python seer.py <campaign directory>
 or
-    python seer.py <master IPv6 address> <your name>
+    python seer.py <master IPv6 address> <your name> [<port>]
 """
 
 if __name__ == '__main__':
     if len(sys.argv) == 2:
         master_main(sys.argv[1])
-    elif len(sys.argv) == 3:
-        player_main(sys.argv[1], sys.argv[2])
+    elif len(sys.argv) in (3, 4):
+        port = None
+        if len(sys.argv) == 4:
+            port = int(sys.argv[3])
+        player_main(sys.argv[1], sys.argv[2], port)
     else:
         print(HELP)

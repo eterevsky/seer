@@ -80,7 +80,7 @@ Pane.register_event_type('on_content_resize')
 
 class Controller(object):
     def __init__(self,
-            pane: Union[pyglet.window.Window, Pane] = None, **kwargs):
+                 pane: Union[pyglet.window.Window, Pane] = None, **kwargs):
         if pane is None:
             self.pane = Pane(**kwargs)
         else:
@@ -210,7 +210,7 @@ class StackLayout(Controller):
     def _find_child(self, x, y):
         """Returns the child contining (x, y) or None."""
         if (self.mouseover_child is not None and
-            self.mouseover_child.contains(x,y)):
+                self.mouseover_child.contains(x, y)):
             return self.mouseover_child
         for child in self.children:
             if child.contains(x, y):
@@ -219,7 +219,10 @@ class StackLayout(Controller):
 
 
 class TextInput(Controller):
-    def __init__(self, content_width=100, content_height=100, background=None):
+    def __init__(self, focus_manager,
+                 content_width=None,
+                 content_height=None,
+                 background=None):
         super().__init__(content_width=content_width,
                          content_height=content_height,
                          background=background)
@@ -230,6 +233,7 @@ class TextInput(Controller):
             wrap_lines=True)
         self.caret = pyglet.text.caret.Caret(self.layout)
         self.caret.visible = False
+        focus_manager.add_input(self)
 
     def on_resize(self, width, height, offset_x, offset_y):
         if width <= 0 or height <= 0:
@@ -249,10 +253,14 @@ class TextInput(Controller):
 
 class Text(Controller):
     def __init__(self, content_width=100, content_height=100, **kwargs):
-        super().__init__(content_width=content_width, content_height=content_height, **kwargs)
+        super().__init__(content_width=content_width,
+                         content_height=content_height, **kwargs)
         self.document = pyglet.text.document.UnformattedDocument('')
         self.layout = pyglet.text.layout.IncrementalTextLayout(
-            self.document, content_width or 100, content_height or 100, multiline=True,
+            self.document,
+            content_width or 100,
+            content_height or 100,
+            multiline=True,
             wrap_lines=True
         )
 
@@ -317,6 +325,7 @@ class FocusManager(object):
         if self._focus:
             return self._focus.caret.on_text_motion_select(motion)
 
+    @pyglet.event.intercept
     def on_key_press(self, symbol, modifiers):
         if not self._focus:
             return pyglet.event.EVENT_UNHANDLED
@@ -324,11 +333,11 @@ class FocusManager(object):
             self._focus.caret.visible = False
             self._focus = None
             return pyglet.event.EVENT_HANDLED
-        if symbol == key.ENTER:
+        if symbol in (key.ENTER, key.NUM_ENTER):
             return self._focus.on_return()
 
         if key.SPACE <= symbol <= key.ASCIITILDE or symbol in (
-            key.UP, key.RIGHT, key.DOWN, key.LEFT,
-            key.BACKSPACE, key.DELETE):
+                key.UP, key.RIGHT, key.DOWN, key.LEFT,
+                key.BACKSPACE, key.DELETE):
             return pyglet.event.EVENT_HANDLED
         return pyglet.event.EVENT_UNHANDLED

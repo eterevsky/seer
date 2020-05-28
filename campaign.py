@@ -4,6 +4,7 @@ import datetime
 import json
 import os.path
 import pyglet
+import time
 
 
 class Fragment(object):
@@ -162,7 +163,7 @@ class Page(object):
 class Campaign(pyglet.event.EventDispatcher):
 
     def __init__(self, resource_provider, player):
-        self._player = player
+        self.player = player
         self._resource_provider = resource_provider
         with resource_provider.open('data.json') as data:
             self._data = json.load(data)
@@ -183,7 +184,7 @@ class Campaign(pyglet.event.EventDispatcher):
 
     @property
     def is_master(self) -> bool:
-        return self._player is None
+        return self.player is None
 
     @property
     def master_page(self):
@@ -191,7 +192,7 @@ class Campaign(pyglet.event.EventDispatcher):
 
     @property
     def current_page(self):
-        if self._player is None:
+        if self.player is None:
             idx = self._data['master_page']
         else:
             idx = self._data['players_page']
@@ -207,15 +208,15 @@ class Campaign(pyglet.event.EventDispatcher):
         return None
 
     def next_page(self):
-        if (self._player is None and
+        if (self.player is None and
             self._data['master_page'] + 1 < len(self.pages)):
             self._data['master_page'] += 1
 
     def prev_page(self):
-        if self._player is None and self._data['master_page'] > 0:
+        if self.player is None and self._data['master_page'] > 0:
             self._data['master_page'] -= 1
 
-    def set_players_page(self, i):
+    def setplayers_page(self, i):
         self._data['players_page'] = i
         self.dispatch_event('on_page_changed', i)
 
@@ -223,11 +224,9 @@ class Campaign(pyglet.event.EventDispatcher):
         with self._resource_provider.open_write('data.json') as wfile:
             json.dump(self._data, wfile, indent=2, sort_keys=True)
 
-    def add_chat(self, text):
-        message = {
-            'player': self._player,
-            'text': text
-        }
+    def add_chat(self, message, player=None):
+        if self.is_master:
+            message['time'] = time.time()
         self._data['chat'].append(message)
         self.dispatch_event('on_new_chat', message)
 

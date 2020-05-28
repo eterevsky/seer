@@ -11,11 +11,12 @@ CLIENT_PORT = 2216
 class ApiServerImpl(socketserver.UDPServer):
     address_family = socket.AF_INET6
 
-    def __init__(self, event_dispatcher, is_master):
+    def __init__(self, event_dispatcher, is_master, port):
         self.platform_event_loop = pyglet.app.platform_event_loop
         self.platform_event_loop.start()
         self.event_dispatcher = event_dispatcher
-        port = PORT if is_master else CLIENT_PORT
+        if port is None:
+            port = PORT if is_master else CLIENT_PORT
         super().__init__(('::', port), None)
 
     def finish_request(self, request, client_address):
@@ -25,12 +26,13 @@ class ApiServerImpl(socketserver.UDPServer):
 
 class ApiServer(threading.Thread):
 
-    def __init__(self, event_dispatcher, master=None):
+    def __init__(self, event_dispatcher, master=None, port=None):
         self.event_dispatcher = event_dispatcher
         self.event_dispatcher.register_event_type('on_api_request_raw')
         self.event_dispatcher.register_event_type('on_api_request')
         self.event_dispatcher.push_handlers(self.on_api_request_raw)
-        self.server = ApiServerImpl(self.event_dispatcher, is_master=(master is None))
+        self.server = ApiServerImpl(
+            self.event_dispatcher, is_master=(master is None), port=port)
         if type(master) is str:
             master = (master, PORT)
         self.master = master
@@ -48,6 +50,7 @@ class ApiServer(threading.Thread):
         self.server.shutdown()
 
     def on_api_request_raw(self, request, client_address):
+        print('on_api_request_raw', request)
         self.players.add(client_address)
         request = json.loads(request[0])
         self.event_dispatcher.dispatch_event('on_api_request', request, client_address)
@@ -63,7 +66,10 @@ class ApiServer(threading.Thread):
 
     def notify(self, request):
         request = json.dumps(request).encode('utf-8')
-        for address in self.players:
-            self.server.socket.sendto(request, address)
         if self.master is not None:
+            print('notify master', request)
             self.server.socket.sendto(request, self.master)
+        else:
+            for address in self.players:
+                print('notify', address, request)
+                self.server.socket.sendto(request, address)
