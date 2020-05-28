@@ -7,6 +7,9 @@ import pyglet
 import time
 
 
+import saviour
+
+
 class Fragment(object):
     """A sprite representing a token or a map tile.
 
@@ -222,7 +225,7 @@ class Campaign(pyglet.event.EventDispatcher):
 
     def save(self):
         with self._resource_provider.open_write('data.json') as wfile:
-            json.dump(self._data, wfile, indent=2, sort_keys=True)
+            saviour.save_json(self._data, wfile)
 
     def add_chat(self, message, player=None):
         if self.is_master:

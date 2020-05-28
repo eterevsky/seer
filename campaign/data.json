@@ -1,267 +1,12 @@
 {
   "chat": [
-    {
-      "player": null,
-      "text": "Test 1"
-    },
-    {
-      "player": null,
-      "text": "abc\n"
-    },
-    {
-      "player": null,
-      "text": "def\n"
-    },
-    {
-      "player": null,
-      "text": "abc\n"
-    },
-    {
-      "player": null,
-      "text": "acb\n"
-    },
-    {
-      "player": null,
-      "text": "asdf\n"
-    },
-    {
-      "player": null,
-      "text": "ASDF\n"
-    },
-    {
-      "player": null,
-      "text": "ASDF"
-    },
-    {
-      "player": "Aengus",
-      "text": "abc",
-      "time": 1590693871.963497
-    },
-    {
-      "player": "Aengus",
-      "text": "abc",
-      "time": 1590693871.971485
-    },
-    {
-      "player": null,
-      "text": "abc",
-      "time": 1590693919.883904
-    },
-    {
-      "player": null,
-      "text": "anv",
-      "time": 1590694042.8350341
-    },
-    {
-      "player": "Aengus",
-      "text": "abc",
-      "time": 1590694099.0680141
-    },
-    {
-      "player": "Aengus",
-      "text": "abc",
-      "time": 1590694099.0721421
-    },
-    {
-      "player": null,
-      "text": "sdf\n",
-      "time": 1590694362.7235358
-    },
-    {
-      "player": null,
-      "text": "abv",
-      "time": 1590694390.520031
-    },
-    {
-      "player": null,
-      "text": "abc",
-      "time": 1590694517.98945
-    },
-    {
-      "player": "Aengus",
-      "text": "cba\n",
-      "time": 1590694522.305794
-    },
-    {
-      "player": "Aengus",
-      "text": "cba\n",
-      "time": 1590694522.307934
-    },
-    {
-      "player": "Aengus",
-      "text": "1",
-      "time": 1590694724.474612
-    },
-    {
-      "player": "Aengus",
-      "text": "2",
-      "time": 1590694728.5087261
-    },
-    {
-      "player": "Aengus",
-      "text": "2",
-      "time": 1590694728.5115578
-    },
-    {
-      "player": "Aengus",
-      "text": "",
-      "time": 1590694728.6583118
-    },
-    {
-      "player": "Aengus",
-      "text": "",
-      "time": 1590694728.660597
-    },
-    {
-      "player": "Aengus",
-      "text": "3",
-      "time": 1590694731.658626
-    },
-    {
-      "player": "Aengus",
-      "text": "3",
-      "time": 1590694731.6621
-    },
-    {
-      "player": "Aengus",
-      "text": "4",
-      "time": 1590694732.975188
-    },
-    {
-      "player": "Aengus",
-      "text": "4",
-      "time": 1590694732.978542
-    },
-    {
-      "player": "Aengus",
-      "text": "5",
-      "time": 1590694733.7412071
-    },
-    {
-      "player": "Aengus",
-      "text": "5",
-      "time": 1590694733.744338
-    },
-    {
-      "player": "Aengus",
-      "text": "1\n",
-      "time": 1590694761.391977
-    },
-    {
-      "player": "Aengus",
-      "text": "1\n",
-      "time": 1590694769.2917671
-    },
-    {
-      "player": "Aengus",
-      "text": "2\n",
-      "time": 1590694776.09214
-    },
-    {
-      "player": "Aengus",
-      "text": "2\n",
-      "time": 1590694776.096391
-    },
-    {
-      "player": "Aengus",
-      "text": "1\n",
-      "time": 1590694906.887754
-    },
-    {
-      "player": "Aengus",
-      "text": "2\n",
-      "time": 1590694913.687965
-    },
-    {
-      "player": "Aengus",
-      "text": "2\n",
-      "time": 1590694913.689575
-    },
-    {
-      "player": "Aengus",
-      "text": "1\n",
-      "time": 1590695255.370637
-    },
-    {
-      "player": "Aengus",
-      "text": "2\n",
-      "time": 1590695278.568332
-    },
-    {
-      "player": "Aengus",
-      "text": "2\n",
-      "time": 1590695278.570399
-    },
-    {
-      "player": "Aengus",
-      "text": "1\n",
-      "time": 1590695405.694415
-    },
-    {
-      "player": "Aengus",
-      "text": "2\n",
-      "time": 1590695423.544725
-    },
-    {
-      "player": "Aengus",
-      "text": "2\n",
-      "time": 1590695423.546344
-    },
-    {
-      "player": "Aengus",
-      "text": "1\n",
-      "time": 1590695509.562845
-    },
-    {
-      "player": "Aengus",
-      "text": "2\n",
-      "time": 1590695512.363424
-    },
-    {
-      "player": "Aengus",
-      "text": "3\n",
-      "time": 1590695522.1629188
-    },
-    {
-      "player": "Aengus",
-      "text": "4\n",
-      "time": 1590695553.147252
-    },
-    {
-      "player": null,
-      "text": "5",
-      "time": 1590695562.517559
-    },
-    {
-      "player": "El",
-      "text": "6",
-      "time": 1590695565.8816168
-    },
-    {
-      "player": "Aengus",
-      "text": "1",
-      "time": 1590695698.1323671
-    },
-    {
-      "player": "Aengus",
-      "text": "2",
-      "time": 1590695700.2656782
-    },
-    {
-      "player": "El",
-      "text": "3",
-      "time": 1590695716.74925
-    },
-    {
-      "player": "El",
-      "text": "4",
-      "time": 1590695720.3832152
-    },
-    {
-      "player": null,
-      "text": "5",
-      "time": 1590695723.736501
-    }
+    {"player": null, "text": "5", "time": 1590695562.517559},
+    {"player": "El", "text": "6", "time": 1590695565.8816168},
+    {"player": "Aengus", "text": "1", "time": 1590695698.1323671},
+    {"player": "Aengus", "text": "2", "time": 1590695700.2656782},
+    {"player": "El", "text": "3", "time": 1590695716.74925},
+    {"player": "El", "text": "4", "time": 1590695720.3832152},
+    {"player": null, "text": "5", "time": 1590695723.736501}
   ],
   "fragments": {
     "hero-1": {
@@ -281,99 +26,40 @@
     "map-camp": {
       "height": 16,
       "path": "maps/BanditCamp.jpg",
-      "position": [
-        0,
-        0
-      ],
+      "position": [0, 0],
       "type": "tile",
       "width": 23
     },
     "map-shipyard": {
       "height": 23,
       "path": "maps/Shipyard (23x16) Base Map, Day.jpg",
-      "position": [
-        0,
-        0
-      ],
+      "position": [0, 0],
       "type": "tile",
       "width": 23
     }
   },
-  "master_page": 0,
+  "master_page": 1,
   "pages": [
     {
       "tokens": [
-        {
-          "fragment_id": "map-shipyard",
-          "id": 1
-        },
-        {
-          "fragment_id": "hero-1",
-          "id": 2,
-          "position": [
-            7.947727272727272,
-            14.529545454545454
-          ]
-        },
-        {
-          "fragment_id": "hero-2",
-          "id": 3,
-          "position": [
-            19,
-            18
-          ]
-        }
+        {"fragment_id": "map-shipyard", "id": 1},
+        {"fragment_id": "hero-1", "id": 2, "position": [8, 16]},
+        {"fragment_id": "hero-2", "id": 3, "position": [19, 18]}
       ],
       "veils": [
-        {
-          "covered": true,
-          "maxx": 7,
-          "maxy": 21,
-          "minx": 3,
-          "miny": 15
-        },
-        {
-          "covered": false,
-          "maxx": 17,
-          "maxy": 21,
-          "minx": 13,
-          "miny": 15
-        }
+        {"covered": true, "maxx": 7, "maxy": 21, "minx": 3, "miny": 15},
+        {"covered": false, "maxx": 17, "maxy": 21, "minx": 13, "miny": 15}
       ]
     },
     {
       "tokens": [
-        {
-          "fragment_id": "map-camp",
-          "id": 4
-        },
-        {
-          "fragment_id": "hero-1",
-          "id": 5,
-          "position": [
-            10,
-            6
-          ]
-        },
-        {
-          "fragment_id": "hero-2",
-          "id": 6,
-          "position": [
-            13,
-            6
-          ]
-        }
+        {"fragment_id": "map-camp", "id": 4},
+        {"fragment_id": "hero-1", "id": 5, "position": [10, 6]},
+        {"fragment_id": "hero-2", "id": 6, "position": [13, 6]}
       ]
     }
   ],
-  "players": [
-    {
-      "name": "Aengus"
-    },
-    {
-      "name": "El"
-    }
-  ],
+  "players": [{"name": "Aengus"}, {"name": "El"}],
   "players_page": 0,
   "title": "Campaign example"
 }
