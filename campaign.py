@@ -173,6 +173,7 @@ class Campaign(pyglet.event.EventDispatcher):
         if resource_provider.can_save:
             backup_fname = 'backups/data-{}.json'.format(
                 datetime.datetime.now().strftime('%Y-%m-%dT%H%M%S'))
+            resource_provider.mkdir('backups')
             resource_provider.copy_file('data.json', backup_fname)
         self.fragments = {}
         for id, frag_data in self._data['fragments'].items():
@@ -230,6 +231,8 @@ class Campaign(pyglet.event.EventDispatcher):
     def add_chat(self, message, player=None):
         if self.is_master:
             message['time'] = time.time()
+        if 'chat' not in self._data:
+            self._data['chat'] = []
         self._data['chat'].append(message)
         self.dispatch_event('on_new_chat', message)
 

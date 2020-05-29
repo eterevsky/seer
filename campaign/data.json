@@ -1,13 +1,5 @@
 {
-  "chat": [
-    {"player": null, "text": "5", "time": 1590695562.517559},
-    {"player": "El", "text": "6", "time": 1590695565.8816168},
-    {"player": "Aengus", "text": "1", "time": 1590695698.1323671},
-    {"player": "Aengus", "text": "2", "time": 1590695700.2656782},
-    {"player": "El", "text": "3", "time": 1590695716.74925},
-    {"player": "El", "text": "4", "time": 1590695720.3832152},
-    {"player": null, "text": "5", "time": 1590695723.736501}
-  ],
+  "chat": [],
   "fragments": {
     "hero-1": {
       "height": 1,

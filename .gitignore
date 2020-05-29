@@ -131,3 +131,4 @@ dmypy.json
 .DS_Store
 campaign/data-*T*.json
 campaign/backups/*.json
+falafel

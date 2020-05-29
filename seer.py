@@ -38,6 +38,12 @@ class LocalResourceProvider(object):
         print('Backing up the campaign to', dst)
         shutil.copyfile(src, dst)
 
+    def mkdir(self, path):
+        try:
+            os.mkdir(os.path.join(self.top_dir, path))
+        except FileExistsError:
+            pass
+
 
 class RemoteResourceProvider(object):
     def __init__(self, address):
