@@ -1,11 +1,11 @@
 import enum
-import functools
+import event
 import pyglet
 from pyglet.window import key
 from typing import List, Union
 
 
-class Pane(pyglet.event.EventDispatcher):
+class Pane(event.EventDispatcher):
     """A rectangular area in a window.
 
     This class manages mouse events related to the controlled area, and
@@ -49,11 +49,11 @@ class Pane(pyglet.event.EventDispatcher):
             ('v2f', self._triangles),
             ('c3B', self._colors))
 
-    @pyglet.event.intercept
+    @event.priority(1)
     def on_draw(self):
         self.draw_background()
 
-    @pyglet.event.intercept
+    @event.priority(1)
     def on_resize(self, width, height, offset_x, offset_y):
         self.offset_x = offset_x
         self.offset_y = offset_y
@@ -229,8 +229,8 @@ class TextInput(Controller):
         print('TextInput background', background)
         self.document = pyglet.text.document.UnformattedDocument('')
         self.layout = pyglet.text.layout.IncrementalTextLayout(
-            self.document, content_width or 100, content_height or 100, multiline=True,
-            wrap_lines=True)
+            self.document, content_width or 100, content_height or 100,
+            multiline=True, wrap_lines=True)
         self.caret = pyglet.text.caret.Caret(self.layout)
         self.caret.visible = False
         focus_manager.add_input(self)
@@ -294,7 +294,7 @@ class FocusManager(object):
                 return controller
         return None
 
-    @pyglet.event.intercept
+    @event.priority(1)
     def on_mouse_press(self, x, y, button, modifiers):
         target = self._find_input(x, y)
         if target is not self._focus and self._focus is not None:
@@ -325,19 +325,19 @@ class FocusManager(object):
         if self._focus:
             return self._focus.caret.on_text_motion_select(motion)
 
-    @pyglet.event.intercept
+    @event.priority(1)
     def on_key_press(self, symbol, modifiers):
         if not self._focus:
-            return pyglet.event.EVENT_UNHANDLED
+            return event.EVENT_UNHANDLED
         if symbol == key.ESCAPE:
             self._focus.caret.visible = False
             self._focus = None
-            return pyglet.event.EVENT_HANDLED
+            return event.EVENT_HANDLED
         if symbol in (key.ENTER, key.NUM_ENTER):
             return self._focus.on_return()
 
         if key.SPACE <= symbol <= key.ASCIITILDE or symbol in (
                 key.UP, key.RIGHT, key.DOWN, key.LEFT,
                 key.BACKSPACE, key.DELETE):
-            return pyglet.event.EVENT_HANDLED
-        return pyglet.event.EVENT_UNHANDLED
+            return event.EVENT_HANDLED
+        return event.EVENT_UNHANDLED

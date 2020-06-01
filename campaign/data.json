@@ -6,7 +6,8 @@
     {"player": "Aengus", "text": "2", "time": 1590695700.2656782},
     {"player": "El", "text": "3", "time": 1590695716.74925},
     {"player": "El", "text": "4", "time": 1590695720.3832152},
-    {"player": null, "text": "5", "time": 1590695723.736501}
+    {"player": null, "text": "5", "time": 1590695723.736501},
+    {"player": null, "text": "abc", "time": 1591008683.5926938}
   ],
   "fragments": {
     "hero-1": {
@@ -54,7 +55,11 @@
     {
       "tokens": [
         {"fragment_id": "map-camp", "id": 4},
-        {"fragment_id": "hero-1", "id": 5, "position": [10, 6]},
+        {
+          "fragment_id": "hero-1",
+          "id": 5,
+          "position": [9.835191082802549, 6.659235668789809]
+        },
         {"fragment_id": "hero-2", "id": 6, "position": [13, 6]}
       ]
     }
