@@ -163,7 +163,7 @@ class Manager(object):
                 print('ignored')
         elif method == 'page_changed':
             self.campaign.set_players_page(params['players_page'])
-            self.map.scale_to_fit(self.window.width, self.window.height)
+            self.map.scale_to_fit()
         elif method == 'veils_updated':
             page_id = params['page_id']
             veils = params['veils']
