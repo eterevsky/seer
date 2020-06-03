@@ -71,22 +71,13 @@
       "player": "Miri"
     }
   },
-  "master_page": 1,
+  "master_page": 0,
   "pages": [
     {
       "tokens": [
         {"fragment_id": "map-shipyard", "id": 1},
         {"fragment_id": "hero-1", "id": 2, "position": [8, 18]},
-        {"fragment_id": "hero-2", "id": 3, "position": [19, 18]},
-        {"fragment_id": "char-amalthas", "id": 2, "position": [17, 19]},
-        {"fragment_id": "char-dalla", "id": 3, "position": [19, 16]},
-        {"fragment_id": "char-lico", "id": 4, "position": [15, 18]},
-        {
-          "fragment_id": "char-euphy",
-          "id": 5,
-          "position": [10.881818181818181, 19.425]
-        },
-        {"fragment_id": "char-miri", "id": 6, "position": [14, 20]}
+        {"fragment_id": "hero-2", "id": 3, "position": [19, 18]}
       ],
       "veils": [
         {"covered": true, "maxx": 7, "maxy": 21, "minx": 3, "miny": 15},
@@ -97,44 +88,11 @@
       "tokens": [
         {"fragment_id": "map-camp", "id": 4},
         {"fragment_id": "hero-1", "id": 5, "position": [10, 6]},
-        {"fragment_id": "hero-2", "id": 6, "position": [8, 7]},
-        {
-          "fragment_id": "char-amalthas",
-          "id": 2,
-          "position": [15.818537411213725, 11.583583512351302]
-        },
-        {
-          "fragment_id": "char-dalla",
-          "id": 3,
-          "position": [13.79991347885309, 13.321300241945208]
-        },
-        {
-          "fragment_id": "char-lico",
-          "id": 4,
-          "position": [12.611224406044794, 12.813694588627369]
-        },
-        {
-          "fragment_id": "char-euphy",
-          "id": 5,
-          "position": [11.581755257347702, 13.683943813213256]
-        },
-        {
-          "fragment_id": "char-miri",
-          "id": 6,
-          "position": [0.7487237512722846, 11.350210032048961]
-        }
+        {"fragment_id": "hero-2", "id": 6, "position": [14, 6]}
       ]
     }
   ],
-  "players": [
-    {"name": "Aengus"},
-    {"name": "El"},
-    {"name": "Amalthas"},
-    {"name": "Dalla"},
-    {"name": "Euphy"},
-    {"name": "Lico"},
-    {"name": "Miri"}
-  ],
+  "players": [{"name": "Aengus"}, {"name": "El"}],
   "players_page": 1,
   "title": "Campaign example"
 }
