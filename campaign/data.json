@@ -4,7 +4,11 @@
     {"player": null, "text": "Chat!", "time": 1590852531.5928352},
     {"player": "Amaltas", "text": "Hello", "time": 1590852556.1250958},
     {"player": null, "text": "Yay!", "time": 1590852559.243505},
-    {"player": null, "text": "abc", "time": 1591212868.7736619}
+    {"player": null, "text": "abc", "time": 1591212868.7736619},
+    {"player": null, "text": "abc", "time": 1591218733.0139596},
+    {"player": "Aengus", "text": "abc", "time": 1591219006.6732361},
+    {"player": "Aengus", "text": "ab", "time": 1591219120.1184216},
+    {"player": "Aengus", "text": "123", "time": 1591219309.9656394}
   ],
   "fragments": {
     "hero-1": {
@@ -34,41 +38,6 @@
       "position": [0, 0],
       "type": "tile",
       "width": 23
-    },
-    "char-amalthas": {
-      "path": "tokens/12.png",
-      "type": "token",
-      "width": 1,
-      "height": 1,
-      "player": "Amalthas"
-    },
-    "char-dalla": {
-      "path": "tokens/28.png",
-      "type": "token",
-      "width": 1,
-      "height": 1,
-      "player": "Dalla"
-    },
-    "char-euphy": {
-      "path": "tokens/33.png",
-      "type": "token",
-      "width": 1,
-      "height": 1,
-      "player": "Euphy"
-    },
-    "char-lico": {
-      "path": "tokens/18.png",
-      "type": "token",
-      "width": 1,
-      "height": 1,
-      "player": "Lico"
-    },
-    "char-miri": {
-      "path": "tokens/40.png",
-      "type": "token",
-      "width": 1,
-      "height": 1,
-      "player": "Miri"
     }
   },
   "master_page": 0,
@@ -76,8 +45,16 @@
     {
       "tokens": [
         {"fragment_id": "map-shipyard", "id": 1},
-        {"fragment_id": "hero-1", "id": 2, "position": [8, 18]},
-        {"fragment_id": "hero-2", "id": 3, "position": [19, 18]}
+        {
+          "fragment_id": "hero-1",
+          "id": 2,
+          "position": [12.941300940438873, 19.780094043887143]
+        },
+        {
+          "fragment_id": "hero-2",
+          "id": 3,
+          "position": [16.960135198040966, 19.42289926389251]
+        }
       ],
       "veils": [
         {"covered": true, "maxx": 7, "maxy": 21, "minx": 3, "miny": 15},
@@ -87,12 +64,20 @@
     {
       "tokens": [
         {"fragment_id": "map-camp", "id": 4},
-        {"fragment_id": "hero-1", "id": 5, "position": [10, 6]},
-        {"fragment_id": "hero-2", "id": 6, "position": [14, 6]}
+        {
+          "fragment_id": "hero-1",
+          "id": 5,
+          "position": [9.822099447513812, 7.067403314917128]
+        },
+        {
+          "fragment_id": "hero-2",
+          "id": 6,
+          "position": [15.804419889502762, 6.355801104972376]
+        }
       ]
     }
   ],
   "players": [{"name": "Aengus"}, {"name": "El"}],
-  "players_page": 1,
+  "players_page": 0,
   "title": "Campaign example"
 }
