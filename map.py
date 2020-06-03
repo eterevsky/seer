@@ -192,10 +192,31 @@ class Map(ui.Controller):
         x, y = token.temp_position
         w, h = token.fragment.size
 
-        screen_x, screen_y = self.map_to_screen(x, y)
+        x0, y0 = self.map_to_screen(x, y)
         screen_w, screen_h = w * self._scale, h * self._scale
-        token.fragment.image.blit(
-            screen_x, screen_y, width=screen_w, height=screen_h)
+        x1, y1 = x0 + screen_w, y0 + screen_h
+
+        clamp_x0 = max(self.pane.offset_x, x0)
+        clamp_y0 = max(self.pane.offset_y, y0)
+        clamp_x1 = min(self.pane.offset_x + self.pane.width, x1)
+        clamp_y1 = min(self.pane.offset_y + self.pane.height, y1)
+
+        if clamp_x0 >= clamp_x1 or clamp_y0 >= clamp_y1:
+            # Token out of the visible part of the screen.
+            return
+
+        image = token.fragment.image
+        if clamp_x0 != x0 or clamp_y0 != y0 or clamp_x1 != x1 or clamp_y1 != y1:
+            texture_scale = token.fragment.resolution / self._scale
+            image = image.get_region(
+                (clamp_x0 - x0) * texture_scale,
+                (clamp_y0 - y0) * texture_scale,
+                (clamp_x1 - clamp_x0) * texture_scale,
+                (clamp_y1 - clamp_y0) * texture_scale)
+
+        image.blit(
+            clamp_x0, clamp_y0,
+            width=(clamp_x1 - clamp_x0), height=(clamp_y1 - clamp_y0))
 
     def on_draw(self):
         if not self.pane.materialized: return
@@ -242,10 +263,10 @@ class Map(ui.Controller):
     def on_mouse_drag(self, screen_x, screen_y, dx, dy, buttons, modifiers):
         if self._dragging_token is None: return
         if not (buttons & mouse.LEFT):
-            print('left button not pressed')
+            # left button not pressed
             return
         if not self.pane.contains(screen_x, screen_y):
-            print('existed the pane')
+            # exited the pane
             return
 
         x, y = self.screen_to_map(screen_x, screen_y)

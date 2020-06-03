@@ -71,7 +71,7 @@
       "player": "Miri"
     }
   },
-  "master_page": 0,
+  "master_page": 1,
   "pages": [
     {
       "tokens": [
@@ -97,7 +97,7 @@
       "tokens": [
         {"fragment_id": "map-camp", "id": 4},
         {"fragment_id": "hero-1", "id": 5, "position": [10, 6]},
-        {"fragment_id": "hero-2", "id": 6, "position": [13, 6]},
+        {"fragment_id": "hero-2", "id": 6, "position": [8, 7]},
         {
           "fragment_id": "char-amalthas",
           "id": 2,
@@ -121,7 +121,7 @@
         {
           "fragment_id": "char-miri",
           "id": 6,
-          "position": [13.234322992715333, 14.04611065219417]
+          "position": [0.7487237512722846, 11.350210032048961]
         }
       ]
     }
