@@ -21,10 +21,7 @@ class Fragment(object):
         self._data = data
         fname = os.path.basename(data['path'])
         with provider.open(data['path']) as file:
-            img = pyglet.image.load(fname, file=file)
-        self._img_width = img.width
-        self._img_height = img.height
-        self.sprite = pyglet.sprite.Sprite(img=img, subpixel=True)
+            self.image = pyglet.image.load(fname, file=file).get_texture()
 
     @property
     def position(self) -> (float, float):
@@ -43,14 +40,14 @@ class Fragment(object):
         if 'width' in self._data:
             return self._data['width']
         else:
-            return self.sprite.width / self._data['resolution']
+            return self.image.width / self._data['resolution']
 
     @property
     def height(self) -> float:
         if 'height' in self._data:
             return self._data['height']
         else:
-            return self._img_height / self._data['resolution']
+            return self.image.height / self._data['resolution']
 
     @property
     def size(self) -> (float, float):
@@ -61,7 +58,7 @@ class Fragment(object):
         if 'resolution' in self._data:
             return self._data['resolution']
         else:
-            return self._img_width / self.width
+            return self.image.width / self.width
 
 
 class Token(object):

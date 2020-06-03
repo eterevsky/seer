@@ -1,6 +1,7 @@
 import math
 import pyglet
 from pyglet.window import key, mouse
+from pyglet import gl
 import time
 
 import ui
@@ -124,8 +125,8 @@ class Map(ui.Controller):
                               x1, screeny])
 
             colors = [127, 127, 127] * (len(lines) // 2)
-            pyglet.gl.glLineWidth(width)
-            pyglet.graphics.draw(len(lines) // 2, pyglet.gl.GL_LINES,
+            gl.glLineWidth(width)
+            pyglet.graphics.draw(len(lines) // 2, gl.GL_LINES,
                 ('v2f', lines),
                 ('c3B', colors)
             )
@@ -135,9 +136,9 @@ class Map(ui.Controller):
         draw_lines(lambda x: x % 10 == 0, 3)
 
         if self._veil_lines:
-            pyglet.gl.glLineWidth(2)
+            gl.glLineWidth(2)
             colors = [255, 255, 255] * (len(self._veil_lines) // 2 )
-            pyglet.graphics.draw(len(self._veil_lines) // 2, pyglet.gl.GL_LINES,
+            pyglet.graphics.draw(len(self._veil_lines) // 2, gl.GL_LINES,
                 ('v2f', self._veil_lines),
                 ('c3B', colors)
             )
@@ -175,23 +176,26 @@ class Map(ui.Controller):
             else:
                 colors.extend([255] * 18)
 
-        pyglet.gl.glEnable(pyglet.gl.GL_BLEND)
-        pyglet.gl.glBlendFunc(pyglet.gl.GL_ONE, pyglet.gl.GL_ONE)
-        pyglet.gl.glBlendEquation(pyglet.gl.GL_FUNC_REVERSE_SUBTRACT)
+        gl.glEnable(gl.GL_BLEND)
+        gl.glBlendFunc(gl.GL_ONE, gl.GL_ONE)
+        gl.glBlendEquation(gl.GL_FUNC_REVERSE_SUBTRACT)
 
-        pyglet.graphics.draw(len(triangles) // 2, pyglet.gl.GL_TRIANGLES,
+        pyglet.graphics.draw(len(triangles) // 2, gl.GL_TRIANGLES,
             ('v2f', triangles),
             ('c3B', colors))
-        pyglet.gl.glDisable(pyglet.gl.GL_BLEND)
-        pyglet.gl.glBlendEquation(pyglet.gl.GL_FUNC_ADD)
+        gl.glDisable(gl.GL_BLEND)
+        gl.glBlendEquation(gl.GL_FUNC_ADD)
 
     def _draw_token(self, token):
-            x, y = token.temp_position
-            screen_x, screen_y = self.map_to_screen(x, y)
-            token.fragment.sprite.update(
-                x=screen_x, y=screen_y,
-                scale=self._scale/token.fragment.resolution)
-            token.fragment.sprite.draw()
+        gl.glEnable(gl.GL_BLEND)
+        gl.glBlendFunc(gl.GL_SRC_ALPHA, gl.GL_ONE_MINUS_SRC_ALPHA)
+        x, y = token.temp_position
+        w, h = token.fragment.size
+
+        screen_x, screen_y = self.map_to_screen(x, y)
+        screen_w, screen_h = w * self._scale, h * self._scale
+        token.fragment.image.blit(
+            screen_x, screen_y, width=screen_w, height=screen_h)
 
     def on_draw(self):
         if not self.pane.materialized: return
