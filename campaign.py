@@ -220,7 +220,7 @@ class Campaign(pyglet.event.EventDispatcher):
         if self.player is None and self._data['master_page'] > 0:
             self._data['master_page'] -= 1
 
-    def setplayers_page(self, i):
+    def set_players_page(self, i):
         self._data['players_page'] = i
         self.dispatch_event('on_page_changed', i)
 

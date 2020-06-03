@@ -1,5 +1,10 @@
 {
-  "chat": [],
+  "chat": [
+    {"player": null, "text": "asdf", "time": 1590852046.58745},
+    {"player": null, "text": "Chat!", "time": 1590852531.5928352},
+    {"player": "Amaltas", "text": "Hello", "time": 1590852556.1250958},
+    {"player": null, "text": "Yay!", "time": 1590852559.243505}
+  ],
   "fragments": {
     "hero-1": {
       "height": 1,
@@ -28,6 +33,41 @@
       "position": [0, 0],
       "type": "tile",
       "width": 23
+    },
+    "char-amalthas": {
+      "path": "tokens/12.png",
+      "type": "token",
+      "width": 1,
+      "height": 1,
+      "player": "Amalthas"
+    },
+    "char-dalla": {
+      "path": "tokens/28.png",
+      "type": "token",
+      "width": 1,
+      "height": 1,
+      "player": "Dalla"
+    },
+    "char-euphy": {
+      "path": "tokens/33.png",
+      "type": "token",
+      "width": 1,
+      "height": 1,
+      "player": "Euphy"
+    },
+    "char-lico": {
+      "path": "tokens/18.png",
+      "type": "token",
+      "width": 1,
+      "height": 1,
+      "player": "Lico"
+    },
+    "char-miri": {
+      "path": "tokens/40.png",
+      "type": "token",
+      "width": 1,
+      "height": 1,
+      "player": "Miri"
     }
   },
   "master_page": 1,
@@ -35,8 +75,13 @@
     {
       "tokens": [
         {"fragment_id": "map-shipyard", "id": 1},
-        {"fragment_id": "hero-1", "id": 2, "position": [8, 16]},
-        {"fragment_id": "hero-2", "id": 3, "position": [19, 18]}
+        {"fragment_id": "hero-1", "id": 2, "position": [8, 18]},
+        {"fragment_id": "hero-2", "id": 3, "position": [19, 18]},
+        {"fragment_id": "char-amalthas", "id": 2, "position": [17, 19]},
+        {"fragment_id": "char-dalla", "id": 3, "position": [19, 16]},
+        {"fragment_id": "char-lico", "id": 4, "position": [15, 18]},
+        {"fragment_id": "char-euphy", "id": 5, "position": [9, 20]},
+        {"fragment_id": "char-miri", "id": 6, "position": [14, 20]}
       ],
       "veils": [
         {"covered": true, "maxx": 7, "maxy": 21, "minx": 3, "miny": 15},
@@ -47,11 +92,44 @@
       "tokens": [
         {"fragment_id": "map-camp", "id": 4},
         {"fragment_id": "hero-1", "id": 5, "position": [10, 6]},
-        {"fragment_id": "hero-2", "id": 6, "position": [13, 6]}
+        {"fragment_id": "hero-2", "id": 6, "position": [13, 6]},
+        {
+          "fragment_id": "char-amalthas",
+          "id": 2,
+          "position": [15.818537411213725, 11.583583512351302]
+        },
+        {
+          "fragment_id": "char-dalla",
+          "id": 3,
+          "position": [13.79991347885309, 13.321300241945208]
+        },
+        {
+          "fragment_id": "char-lico",
+          "id": 4,
+          "position": [12.611224406044794, 12.813694588627369]
+        },
+        {
+          "fragment_id": "char-euphy",
+          "id": 5,
+          "position": [11.581755257347702, 13.683943813213256]
+        },
+        {
+          "fragment_id": "char-miri",
+          "id": 6,
+          "position": [13.234322992715333, 14.04611065219417]
+        }
       ]
     }
   ],
-  "players": [{"name": "Aengus"}, {"name": "El"}],
-  "players_page": 0,
+  "players": [
+    {"name": "Aengus"},
+    {"name": "El"},
+    {"name": "Amalthas"},
+    {"name": "Dalla"},
+    {"name": "Euphy"},
+    {"name": "Lico"},
+    {"name": "Miri"}
+  ],
+  "players_page": 1,
   "title": "Campaign example"
 }
