@@ -56,24 +56,27 @@ class RemoteResourceProvider(object):
 
 
 class Manager(object):
-    def __init__(self, window, campaign, api_server, player):
-        self.window = window
+    def __init__(self, campaign, api_server, player):
         self.campaign = campaign
+        self.campaign.push_handlers(self)
+
         self.api_server = api_server
+        self.api_server.push_handlers(self)
+
         self.player = player
 
-        self.campaign.push_handlers(self)
+        self.window = pyglet.window.Window(resizable=True)
         self.window.push_handlers(self)
-        self.focus_manager = ui.FocusManager(window)
-
-        self.layout = ui.StackLayout(ui.Orientation.HORIZONTAL, window)
+        self.focus_manager = ui.FocusManager(self.window)
+        self.layout = ui.StackLayout(ui.Orientation.HORIZONTAL, self.window)
         sidebar = ui.StackLayout(
             ui.Orientation.VERTICAL, content_width=200)
         self.layout.add_child(sidebar)
 
         chat_text = chat.ChatText(self.campaign)
         sidebar.add_child(chat_text)
-        chat_input = chat.ChatInput(self.campaign, self.api_server, self.focus_manager)
+        chat_input = chat.ChatInput(
+            self.campaign, self.api_server, self.focus_manager)
         sidebar.add_child(chat_input)
 
         self.map = Map(campaign, player)
@@ -237,11 +240,10 @@ def master_main(campaign_dir):
 
     resource_provider = LocalResourceProvider(campaign_dir)
     campaign = Campaign(resource_provider, None)
-    window = pyglet.window.Window(resizable=True)
     res_server = resserver.ResourceServer(campaign_dir, campaign)
-    api_server = apiserver.ApiServer(window)
+    api_server = apiserver.ApiServer()
 
-    manager = Manager(window, campaign, api_server, None)
+    manager = Manager(campaign, api_server, None)
 
     pyglet.app.run()
 
@@ -258,9 +260,7 @@ def player_main(address, player, port):
     assert address.version == 6
     master_address = address.exploded
 
-    window = pyglet.window.Window(resizable=True)
-
-    api_server = apiserver.ApiServer(window, master_address, port=port)
+    api_server = apiserver.ApiServer(master_address, port=port)
     request = {
         'id': 1,
         'method': 'hi',
@@ -270,7 +270,7 @@ def player_main(address, player, port):
 
     resource_provider = RemoteResourceProvider(master_address)
     campaign = Campaign(resource_provider, player)
-    manager = Manager(window, campaign, api_server, player)
+    manager = Manager(campaign, api_server, player)
 
     pyglet.app.run()
 

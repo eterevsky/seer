@@ -76,7 +76,11 @@
     {
       "tokens": [
         {"fragment_id": "map-shipyard", "id": 1},
-        {"fragment_id": "hero-1", "id": 2, "position": [8, 18]},
+        {
+          "fragment_id": "hero-1",
+          "id": 2,
+          "position": [7.581818181818182, 16.69318181818182]
+        },
         {"fragment_id": "hero-2", "id": 3, "position": [19, 18]}
       ],
       "veils": [

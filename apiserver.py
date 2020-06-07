@@ -4,6 +4,8 @@ import socket
 import socketserver
 import threading
 
+import event
+
 PORT = 2214
 CLIENT_PORT = 2216
 
@@ -24,15 +26,10 @@ class ApiServerImpl(socketserver.UDPServer):
             self.event_dispatcher, 'on_api_request_raw', request, client_address)
 
 
-class ApiServer(threading.Thread):
-
-    def __init__(self, event_dispatcher, master=None, port=None):
-        self.event_dispatcher = event_dispatcher
-        self.event_dispatcher.register_event_type('on_api_request_raw')
-        self.event_dispatcher.register_event_type('on_api_request')
-        self.event_dispatcher.push_handlers(self.on_api_request_raw)
+class ApiServer(threading.Thread, event.EventDispatcher):
+    def __init__(self,master=None, port=None):
         self.server = ApiServerImpl(
-            self.event_dispatcher, is_master=(master is None), port=port)
+            self, is_master=(master is None), port=port)
         if type(master) is str:
             master = (master, PORT)
         self.master = master
@@ -53,7 +50,7 @@ class ApiServer(threading.Thread):
         print('on_api_request_raw', request)
         self.players.add(client_address)
         request = json.loads(request[0])
-        self.event_dispatcher.dispatch_event('on_api_request', request, client_address)
+        self.dispatch_event('on_api_request', request, client_address)
 
     def send(self, request, address=None):
         if address is None: address = self.master
@@ -73,3 +70,6 @@ class ApiServer(threading.Thread):
             for address in self.players:
                 print('notify', address, request)
                 self.server.socket.sendto(request, address)
+
+ApiServer.register_event_type('on_api_request_raw')
+ApiServer.register_event_type('on_api_request')
