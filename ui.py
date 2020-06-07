@@ -78,7 +78,7 @@ Pane.register_event_type('on_resize')
 Pane.register_event_type('on_content_resize')
 
 
-class Controller(object):
+class View(object):
     def __init__(self,
                  pane: Union[pyglet.window.Window, Pane] = None, **kwargs):
         if pane is None:
@@ -94,12 +94,12 @@ class Orientation(enum.Enum):
     VERTICAL = 2
 
 
-class StackLayout(Controller):
+class StackLayout(View):
     def __init__(self,
                  orientation: Orientation,
-                 parent: Union[pyglet.window.Window, Pane] = None,
+                 pane: Union[pyglet.window.Window, Pane] = None,
                  **kwargs):
-        super().__init__(parent, **kwargs)
+        super().__init__(pane, **kwargs)
         self.orientation = orientation
         self.children = []
         self.mouseover_child = None
@@ -169,7 +169,7 @@ class StackLayout(Controller):
     def on_resize(self, width, height, offset_x=0, offset_y=0):
         self._resize()
 
-    def add_child(self, child: Union[Pane, Controller]) -> None:
+    def add_child(self, child: Union[Pane, View]) -> None:
         print('add_child', child)
         if isinstance(child, Pane):
             self.children.append(child)
@@ -218,7 +218,7 @@ class StackLayout(Controller):
         return None
 
 
-class TextInput(Controller):
+class TextInput(View):
     def __init__(self, focus_manager,
                  content_width=None,
                  content_height=None,
@@ -251,7 +251,7 @@ class TextInput(Controller):
         pass
 
 
-class Text(Controller):
+class Text(View):
     def __init__(self, content_width=100, content_height=100, **kwargs):
         super().__init__(content_width=content_width,
                          content_height=content_height, **kwargs)

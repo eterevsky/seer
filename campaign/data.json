@@ -40,7 +40,7 @@
       "width": 23
     }
   },
-  "master_page": 0,
+  "master_page": 1,
   "pages": [
     {
       "tokens": [
@@ -60,20 +60,12 @@
     {
       "tokens": [
         {"fragment_id": "map-camp", "id": 4},
-        {
-          "fragment_id": "hero-1",
-          "id": 5,
-          "position": [9.822099447513812, 7.067403314917128]
-        },
-        {
-          "fragment_id": "hero-2",
-          "id": 6,
-          "position": [15.804419889502762, 6.355801104972376]
-        }
+        {"fragment_id": "hero-1", "id": 5, "position": [10, 6]},
+        {"fragment_id": "hero-2", "id": 6, "position": [18, 5]}
       ]
     }
   ],
   "players": [{"name": "Aengus"}, {"name": "El"}],
-  "players_page": 0,
+  "players_page": 1,
   "title": "Campaign example"
 }

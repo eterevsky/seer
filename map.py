@@ -7,7 +7,7 @@ import time
 import ui
 
 
-class Map(ui.Controller):
+class Map(ui.View):
     def __init__(self, campaign, player):
         super().__init__(background=(0, 0, 0))
         self._campaign = campaign
