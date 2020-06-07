@@ -162,8 +162,6 @@ class Manager(object):
             if token is not self.map._dragging_token:
                 token.set_temp_position(
                     position[0], position[1], notify=self.is_master)
-            else:
-                print('ignored')
         elif method == 'page_changed':
             self.campaign.set_players_page(params['players_page'])
             self.map.scale_to_fit()

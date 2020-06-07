@@ -47,7 +47,6 @@ class ApiServer(threading.Thread, event.EventDispatcher):
         self.server.shutdown()
 
     def on_api_request_raw(self, request, client_address):
-        print('on_api_request_raw', request)
         self.players.add(client_address)
         request = json.loads(request[0])
         self.dispatch_event('on_api_request', request, client_address)

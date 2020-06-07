@@ -77,6 +77,7 @@ class Token(object):
 
     def update_data(self, data, notify=False):
         self._data = data
+        self._temp_position = None
         if notify:
             self._campaign.dispatch_event('on_token_updated', self)
 
