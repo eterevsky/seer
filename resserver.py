@@ -43,8 +43,6 @@ class ResourceServerImpl(socketserver.TCPServer):
 class ResourceServer(threading.Thread, pyglet.event.EventDispatcher):
     def __init__(self, campaign_dir, campaign):
         self.campaign = campaign
-        self.register_event_type('on_request_data')
-        self.push_handlers(self.on_request_data)
         self.data_queue = queue.Queue()
         self.httpd = ResourceServerImpl(campaign_dir, self, self.data_queue)
         super().__init__()
@@ -63,3 +61,5 @@ class ResourceServer(threading.Thread, pyglet.event.EventDispatcher):
         data = self.campaign._data
         data = json.dumps(data).encode('utf-8')
         self.data_queue.put(data)
+
+ResourceServer.register_event_type('on_request_data')
