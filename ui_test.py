@@ -6,22 +6,32 @@ import ui
 window = pyglet.window.Window(resizable=True)
 
 def update(dt): pass
-pyglet.clock.schedule_interval(update, 0.001)
+pyglet.clock.schedule_interval(update, 1)
 
 focus_manager = ui.FocusManager(window)
 
-layout = ui.StackLayout(ui.Orientation.HORIZONTAL, window)
-column1 = ui.StackLayout(
-    ui.Orientation.VERTICAL, content_width=200, background=(0, 255, 0))
-column1.add_child(ui.Pane(background=(64, 64, 64)))
-text1 = ui.TextInput(content_height=200, background=(128, 128, 128))
-focus_manager.add_input(text1)
-column1.add_child(text1)
-text2 = ui.TextInput(content_height=100, background=(160, 160, 160))
-focus_manager.add_input(text2)
-column1.add_child(text2)
-layout.add_child(column1)
-layout.add_child(ui.Pane(background=(0, 0, 255)))
-layout.add_child(ui.Pane(content_width=100, background=(255, 0, 0)))
+# layout = ui.RootLayout(window, ui.HStackLayout(
+#     ui.Spacer().set_min_width(200).set_flex_width(False).set_background((127, 0, 0)),
+#     ui.Spacer(background=(127, 127, 127)),
+#     ui.Spacer(background=(0, 0, 127))
+# ))
+
+layout = ui.RootLayout(window, ui.HStackLayout(
+    ui.VStackLayout(
+        ui.Spacer(min_height=100, flex_height=False, background=(0, 0, 0)),
+        ui.Spacer(background=(0, 127, 0)),
+        ui.Spacer(background=(0, 0, 127))
+    ).set_min_width(200).set_flex_width(False),
+    ui.VStackLayout(
+        ui.Spacer(min_width=200, min_height=200, flex_width=False,
+                  flex_height=False, background=(127, 127, 127))
+    ),
+    ui.VStackLayout(
+        ui.Spacer(background=(127, 127, 0)),
+        ui.Spacer(min_height=200, flex_height=False, background=(0, 127, 127))
+    )
+))
+
+print(layout)
 
 pyglet.app.run()

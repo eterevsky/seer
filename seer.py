@@ -68,19 +68,20 @@ class Manager(object):
         self.window = pyglet.window.Window(resizable=True)
         self.window.push_handlers(self)
         self.focus_manager = ui.FocusManager(self.window)
-        self.layout = ui.StackLayout(ui.Orientation.HORIZONTAL, self.window)
-        sidebar = ui.StackLayout(
-            ui.Orientation.VERTICAL, content_width=200)
-        self.layout.add_child(sidebar)
-
-        chat_text = chat.ChatText(self.campaign)
-        sidebar.add_child(chat_text)
-        chat_input = chat.ChatInput(
-            self.campaign, self.api_server, self.focus_manager)
-        sidebar.add_child(chat_input)
 
         self.map = Map(campaign, player)
-        self.layout.add_child(self.map)
+        self.layout = ui.RootLayout(self.window, ui.HStackLayout(
+            ui.VStackLayout(
+                chat.ChatText(self.campaign),
+                chat.ChatInput(self.campaign, self.api_server, self.focus_manager)
+                    .set_min_height(100).set_flex_height(False)
+            ).set_background((40, 40, 40))
+             .set_min_width(300)
+             .set_flex_width(False),
+            self.map
+        ))
+
+        print(self.layout)
 
         # Make sure that on_draw is called regularly.
         pyglet.clock.schedule_interval(lambda _: None, 1 / 120)

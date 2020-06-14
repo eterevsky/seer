@@ -8,8 +8,8 @@ import ui
 
 
 class Map(ui.View):
-    def __init__(self, campaign, player):
-        super().__init__(background=(0, 0, 0))
+    def __init__(self, campaign, player, background=(0, 0, 0), **kwargs):
+        super().__init__(background=background, **kwargs)
         self._campaign = campaign
         self.player = player
         self._dragging_token = None
@@ -49,23 +49,18 @@ class Map(ui.View):
     def map_to_screen(self, x, y):
         return x * self._scale + self._tx, y * self._scale + self._ty
 
-    def scale_to_fit(self, pane_width=None, pane_height=None,
-                     offset_x=None, offset_y=None):
-        if not self.pane.materialized: return
+    def scale_to_fit(self):
+        if self.pane.width <= 0: return
         if not self._campaign.fragments:
             self._tx = 0
             self._ty = 0
             self._scale = 70
             return
 
-        if pane_width is None:
-            pane_width = self.pane.width
-        if pane_height is None:
-            pane_height = self.pane.height
-        if offset_x is None:
-            offset_x = self.pane.offset_x
-        if offset_y is None:
-            offset_y = self.pane.offset_y
+        pane_width = self.pane.width
+        pane_height = self.pane.height
+        offset_x = self.pane.x0
+        offset_y = self.pane.y0
 
         minx, maxx, miny, maxy = self._bounding_box()
 
@@ -102,9 +97,8 @@ class Map(ui.View):
         self._show_grid = not self._show_grid
 
     def _draw_grid(self):
-        w, h = self.pane.width, self.pane.height
-        x0, y0 = self.pane.offset_x, self.pane.offset_y
-        x1, y1 = x0 + w, y0 + h
+        x0, y0 = self.pane.x0, self.pane.y0
+        x1, y1 = self.pane.x1, self.pane.y1
 
         minx, miny = self.screen_to_map(x0, y0)
         maxx, maxy = self.screen_to_map(x1, y1)
@@ -196,10 +190,10 @@ class Map(ui.View):
         screen_w, screen_h = w * self._scale, h * self._scale
         x1, y1 = x0 + screen_w, y0 + screen_h
 
-        clamp_x0 = max(self.pane.offset_x, x0)
-        clamp_y0 = max(self.pane.offset_y, y0)
-        clamp_x1 = min(self.pane.offset_x + self.pane.width, x1)
-        clamp_y1 = min(self.pane.offset_y + self.pane.height, y1)
+        clamp_x0 = max(self.pane.x0, x0)
+        clamp_y0 = max(self.pane.y0, y0)
+        clamp_x1 = min(self.pane.x1, x1)
+        clamp_y1 = min(self.pane.y1, y1)
 
         if clamp_x0 >= clamp_x1 or clamp_y0 >= clamp_y1:
             # Token out of the visible part of the screen.
@@ -219,8 +213,7 @@ class Map(ui.View):
             width=(clamp_x1 - clamp_x0), height=(clamp_y1 - clamp_y0))
 
     def on_draw(self):
-        if not self.pane.materialized: return
-        self.pane.draw_background()
+        assert self.pane.width > 0
         self._update_pan()
         # Draw non-player tokens
         for token in self._campaign.current_page.tokens:
@@ -236,8 +229,8 @@ class Map(ui.View):
 
         return True
 
-    def on_resize(self, width, height, offset_x, offset_y):
-        self.scale_to_fit(width, height, offset_x, offset_y)
+    def on_resize(self, *args):
+        self.scale_to_fit()
 
     def on_mouse_scroll(self, x, y, scroll_x, scroll_y):
         self.zoom(x, y, 1.1 ** (-scroll_y))

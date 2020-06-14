@@ -464,6 +464,8 @@ class EventDispatcher(object):
 
         No error is raised if the event handler is not set.
         """
+        if self._handlers is None:
+            return
         if handler is None:
             # Called with one positional argument (example #1)
             assert name is None

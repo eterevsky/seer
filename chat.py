@@ -4,7 +4,7 @@ import ui
 
 class ChatText(ui.Text):
     def __init__(self, c: campaign.Campaign):
-        super().__init__(content_height=None, background=(64, 64, 64))
+        super().__init__()
         self.campaign = c
         self.campaign.push_handlers(self.on_new_chat)
 
@@ -19,8 +19,7 @@ class ChatText(ui.Text):
 class ChatInput(ui.TextInput):
     def __init__(self, c: campaign.Campaign, api_server,
                  focus_manager: ui.FocusManager):
-        super().__init__(focus_manager=focus_manager,
-                         content_height=200, background=(128, 128, 128))
+        super().__init__(focus_manager=focus_manager)
         self.campaign = c
         self.api_server = api_server
 

@@ -8,7 +8,11 @@
     {"player": null, "text": "abc", "time": 1591218733.0139596},
     {"player": "Aengus", "text": "abc", "time": 1591219006.6732361},
     {"player": "Aengus", "text": "ab", "time": 1591219120.1184216},
-    {"player": "Aengus", "text": "123", "time": 1591219309.9656394}
+    {"player": "Aengus", "text": "123", "time": 1591219309.9656394},
+    {"player": null, "text": "absdef", "time": 1592157263.5764081},
+    {"player": null, "text": "Hello world!", "time": 1592157674.578781},
+    {"player": null, "text": "Hello world!", "time": 1592157762.3027709},
+    {"player": null, "text": "This is chat!", "time": 1592157791.705507}
   ],
   "fragments": {
     "hero-1": {
@@ -40,7 +44,7 @@
       "width": 23
     }
   },
-  "master_page": 1,
+  "master_page": 0,
   "pages": [
     {
       "tokens": [
