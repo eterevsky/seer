@@ -72,9 +72,16 @@ class Manager(object):
         self.map = Map(campaign, player)
         self.layout = ui.RootLayout(self.window, ui.HStackLayout(
             ui.VStackLayout(
-                chat.ChatText(self.campaign),
-                chat.ChatInput(self.campaign, self.api_server, self.focus_manager)
-                    .set_min_height(100).set_flex_height(False)
+                ui.HStackLayout(
+                    ui.Image(get_image=campaign.get_player_image, min_width=70,
+                             flex_width=False),
+                    ui.Text(get_text=campaign.get_current_player, font_size=24,
+                            padding=15, valign='bottom'),
+                ).set_min_height(70).set_flex_height(False),
+                chat.ChatText(self.campaign, multiline=True),
+                chat.ChatInput(
+                    self.campaign, self.api_server, self.focus_manager,
+                    min_height=100, flex_height=False)
             ).set_background((40, 40, 40))
              .set_min_width(300)
              .set_flex_width(False),

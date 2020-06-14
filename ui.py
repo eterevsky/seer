@@ -1,6 +1,7 @@
 import enum
 import event
 import pyglet
+from pyglet import gl
 from pyglet.window import key
 from typing import List, Union
 
@@ -375,13 +376,15 @@ class StackLayout(View):
                     next_offset = min(offset + min_dim, self.pane.x1)
                 else:
                     next_offset = offset + min_dim + extra_dim
-                pane.change_dims(x0=offset, x1=next_offset, y0=self.pane.y0, y1=self.pane.y1)
+                pane.change_dims(
+                    x0=offset, x1=next_offset, y0=self.pane.y0, y1=self.pane.y1)
             else:
                 if extra_dim <= 0 or not flex:
                     next_offset = max(offset - min_dim, self.pane.y0)
                 else:
                     next_offset = offset - min_dim - extra_dim
-                pane.change_dims(x0=self.pane.x0, x1=self.pane.x1, y0=next_offset, y1=offset)
+                pane.change_dims(
+                    x0=self.pane.x0, x1=self.pane.x1, y0=next_offset, y1=offset)
 
             offset = next_offset
 
@@ -455,29 +458,56 @@ class TextInput(View):
 
 
 class Text(View):
-    def __init__(self, text_color=(192, 192, 192, 255), **kwargs):
+    def __init__(
+            self, text='', get_text=None, color=(192, 192, 192, 255),
+            font_size=None, valign='top',
+            padding=5, multiline=False, **kwargs):
         super().__init__(**kwargs)
-        self.document = pyglet.text.document.UnformattedDocument('')
-        self.document.set_style(0, 0, {'color': text_color})
+        self.document = pyglet.text.document.UnformattedDocument(text)
+        self.document.set_style(0, 0, {'color': color, 'font_size': font_size})
         self.layout = None
+        self.multiline = multiline
+        self.padding = padding
+        self.get_text = get_text
+        self.valign = valign
 
     def attach(self, pane):
         super().attach(pane)
         self.layout = pyglet.text.layout.IncrementalTextLayout(
-            self.document, pane.width - 10, pane.height - 10,
-            multiline=True, wrap_lines=True)
-        self.layout.x = pane.x0 + 5
-        self.layout.y = pane.y0 + 5
+            self.document, pane.width - 2 * self.padding,
+            pane.height - 2 * self.padding,
+            multiline=self.multiline, wrap_lines=True)
+        self.layout.content_valign=self.valign
+        self.layout.x = pane.x0 + self.padding
+        self.layout.y = pane.y0 + self.padding
 
     def on_resize(self, width, height, offset_x, offset_y):
-        self.layout.width = width - 10
-        self.layout.height = height - 10
-        self.layout.x = offset_x + 5
-        self.layout.y = offset_y + 5
+        self.layout.width = width - 2 * self.padding
+        self.layout.height = height - 2 * self.padding
+        self.layout.x = offset_x + self.padding
+        self.layout.y = offset_y + self.padding
 
     def on_draw(self):
         assert self.layout is not None
+        if self.get_text is not None:
+            self.document.text = self.get_text()
         self.layout.draw()
+
+
+class Image(View):
+    def __init__(self, image=None, get_image=None, **kwargs):
+        super().__init__(**kwargs)
+        self.image = image
+        self.get_image = get_image
+
+    def on_draw(self):
+        if self.get_image is not None:
+            self.image = self.get_image()
+        if self.image is not None:
+            gl.glEnable(gl.GL_BLEND)
+            gl.glBlendFunc(gl.GL_SRC_ALPHA, gl.GL_ONE_MINUS_SRC_ALPHA)
+            self.image.blit(self.pane.x0, self.pane.y0, width=self.pane.width,
+                            height=self.pane.height)
 
 
 class FocusManager(object):
@@ -542,8 +572,9 @@ class FocusManager(object):
         if symbol in (key.ENTER, key.NUM_ENTER):
             return self._focus.on_return()
 
-        if key.SPACE <= symbol <= key.ASCIITILDE or symbol in (
+        if symbol is not None and (
+            key.SPACE <= symbol <= key.ASCIITILDE or symbol in (
                 key.UP, key.RIGHT, key.DOWN, key.LEFT,
-                key.BACKSPACE, key.DELETE):
+                key.BACKSPACE, key.DELETE)):
             return event.EVENT_HANDLED
         return event.EVENT_UNHANDLED

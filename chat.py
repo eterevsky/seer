@@ -3,8 +3,8 @@ import ui
 
 
 class ChatText(ui.Text):
-    def __init__(self, c: campaign.Campaign):
-        super().__init__()
+    def __init__(self, c: campaign.Campaign, **kwargs):
+        super().__init__(**kwargs)
         self.campaign = c
         self.campaign.push_handlers(self.on_new_chat)
 
@@ -18,8 +18,8 @@ class ChatText(ui.Text):
 
 class ChatInput(ui.TextInput):
     def __init__(self, c: campaign.Campaign, api_server,
-                 focus_manager: ui.FocusManager):
-        super().__init__(focus_manager=focus_manager)
+                 focus_manager: ui.FocusManager, **kwargs):
+        super().__init__(focus_manager=focus_manager, **kwargs)
         self.campaign = c
         self.api_server = api_server
 

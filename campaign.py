@@ -184,6 +184,15 @@ class Campaign(pyglet.event.EventDispatcher):
             for token in page.tokens:
                 self.tokens[token.id] = token
 
+    def get_current_player(self):
+        return self.player or 'Aengus'
+
+    def get_player_image(self, player=None):
+        if player is None:
+            player = self.get_current_player()
+        fragment_id = self._data['players'][player]['fragment_id']
+        return self.fragments[fragment_id].image
+
     @property
     def is_master(self) -> bool:
         return self.player is None

@@ -12,7 +12,22 @@
     {"player": null, "text": "absdef", "time": 1592157263.5764081},
     {"player": null, "text": "Hello world!", "time": 1592157674.578781},
     {"player": null, "text": "Hello world!", "time": 1592157762.3027709},
-    {"player": null, "text": "This is chat!", "time": 1592157791.705507}
+    {"player": null, "text": "This is chat!", "time": 1592157791.705507},
+    {"player": null, "text": "abc", "time": 1592160695.511276},
+    {"player": null, "text": "abc", "time": 1592160780.7663412},
+    {"player": null, "text": "Chat", "time": 1592160972.353247},
+    {"player": null, "text": "This is chat", "time": 1592162958.571831},
+    {
+      "player": null,
+      "text": "\u042d\u0442\u043e \u0447\u0430\u0442",
+      "time": 1592162961.255262
+    },
+    {"player": null, "text": "Chat", "time": 1592163020.2747562},
+    {
+      "player": null,
+      "text": "\u042d\u0442\u043e \u0447\u0430\u0442",
+      "time": 1592163024.45912
+    }
   ],
   "fragments": {
     "hero-1": {
@@ -52,9 +67,13 @@
         {
           "fragment_id": "hero-1",
           "id": 2,
-          "position": [7.581818181818182, 16.69318181818182]
+          "position": [12.927604937913147, 19.264975308014673]
         },
-        {"fragment_id": "hero-2", "id": 3, "position": [19, 18]}
+        {
+          "fragment_id": "hero-2",
+          "id": 3,
+          "position": [18.500116886688666, 17.04641089108911]
+        }
       ],
       "veils": [
         {"covered": true, "maxx": 7, "maxy": 21, "minx": 3, "miny": 15},
@@ -69,7 +88,7 @@
       ]
     }
   ],
-  "players": [{"name": "Aengus"}, {"name": "El"}],
-  "players_page": 1,
+  "players": {"Aengus": {"fragment_id": "hero-1"}, "El": {"fragment_id": "hero-2"}},
+  "players_page": 0,
   "title": "Campaign example"
 }
