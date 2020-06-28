@@ -8,10 +8,9 @@ import ui
 
 
 class Map(ui.View):
-    def __init__(self, campaign, player, background=(0, 0, 0), **kwargs):
+    def __init__(self, state, background=(0, 0, 0), **kwargs):
         super().__init__(background=background, **kwargs)
-        self._campaign = campaign
-        self.player = player
+        self.state = state
         self._dragging_token = None
         self._tx = 0
         self._ty = 0
@@ -28,7 +27,7 @@ class Map(ui.View):
     def _bounding_box(self):
         minx, maxx = 1E6, -1E6
         miny, maxy = 1E6, -1E6
-        for token in self._campaign.current_page.tokens:
+        for token in self.state.current_page.tokens:
             x0, y0 = token.position
             if x0 < minx: minx = x0
             if y0 < miny: miny = y0
@@ -51,11 +50,6 @@ class Map(ui.View):
 
     def scale_to_fit(self):
         if self.pane.width <= 0: return
-        if not self._campaign.fragments:
-            self._tx = 0
-            self._ty = 0
-            self._scale = 70
-            return
 
         pane_width = self.pane.width
         pane_height = self.pane.height
@@ -142,9 +136,9 @@ class Map(ui.View):
         colors = []
         self._veil_lines = []
 
-        for veil in self._campaign.current_page.veils:
+        for veil in self.state.current_page.veils:
             if (not veil['covered'] and
-                (not self._campaign.is_master or
+                (not self.state.is_master or
                  not self.show_veils)): continue
             minx, miny = self.map_to_screen(veil['minx'], veil['miny'])
             maxx, maxy = self.map_to_screen(veil['maxx'], veil['maxy'])
@@ -159,7 +153,7 @@ class Map(ui.View):
                 clamp_x0, clamp_y0, clamp_x1, clamp_y0, clamp_x1, clamp_y1,
                 clamp_x0, clamp_y1, clamp_x0, clamp_y0, clamp_x1, clamp_y1
             ])
-            if self._campaign.is_master:
+            if self.state.is_master:
                 if veil['covered']:
                     if self.show_veils:
                         colors.extend([128] * 18)
@@ -228,14 +222,14 @@ class Map(ui.View):
         assert self.pane.width > 0
         self._update_pan()
         # Draw non-player tokens
-        for token in self._campaign.current_page.tokens:
+        for token in self.state.current_page.tokens:
             if token.player is None:
                 self._draw_token(token)
         self._draw_veils()
         if self._show_grid:
             self._draw_grid()
         # Draw player tokens
-        for token in self._campaign.current_page.tokens:
+        for token in self.state.current_page.tokens:
             if token.player is not None:
                 self._draw_token(token)
 
@@ -255,12 +249,12 @@ class Map(ui.View):
         x, y = self.screen_to_map(screenx, screeny)
 
         if modifiers & key.MOD_ACCEL:
-            if self._campaign.is_master:
-                self._campaign.current_page.toggle_veil(x, y)
+            if self.state.is_master:
+                self.state.current_page.toggle_veil(x, y)
             return
 
-        token = self._campaign.find_token(x, y)
-        if token is not None and token.controlled_by(self.player):
+        token = self.state.current_page.find_token(x, y)
+        if token is not None and token.controlled_by(self.state.player):
             self._dragging_token = token
             tx, ty = token.position
             self._dragging_token_offset = (x - tx, y - ty)

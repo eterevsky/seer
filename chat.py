@@ -1,4 +1,5 @@
 import campaign
+import state
 import ui
 
 
@@ -17,21 +18,21 @@ class ChatText(ui.Text):
 
 
 class ChatInput(ui.TextInput):
-    def __init__(self, c: campaign.Campaign, api_server,
+    def __init__(self, s: state.State, api_server,
                  focus_manager: ui.FocusManager, **kwargs):
         super().__init__(focus_manager=focus_manager, **kwargs)
-        self.campaign = c
+        self.state = s
         self.api_server = api_server
 
     def on_return(self):
         message = {
-            'player': self.campaign.player,
+            'player': self.state.player,
             'text': self.document.text.strip(),
         }
         self.document.text = ''
 
-        if self.campaign.is_master:
-            self.campaign.add_chat(message)
+        if self.state.is_master:
+            self.state.campaign.add_chat(message)
         else:
             notification = {
                 'method': 'player_chat',

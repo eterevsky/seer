@@ -14,6 +14,7 @@ from campaign import Campaign
 import chat
 from map import Map
 import resserver
+from state import State
 import ui
 
 
@@ -56,31 +57,31 @@ class RemoteResourceProvider(object):
 
 
 class Manager(object):
-    def __init__(self, campaign, api_server, player):
-        self.campaign = campaign
+    def __init__(self, state, api_server):
+        self.state = state
+
+        self.campaign = state.campaign
         self.campaign.push_handlers(self)
 
         self.api_server = api_server
         self.api_server.push_handlers(self)
 
-        self.player = player
-
         self.window = pyglet.window.Window(resizable=True)
         self.window.push_handlers(self)
         self.focus_manager = ui.FocusManager(self.window)
 
-        self.map = Map(campaign, player)
+        self.map = Map(state)
         self.layout = ui.RootLayout(self.window, ui.HStackLayout(
             ui.VStackLayout(
                 ui.HStackLayout(
-                    ui.Image(get_image=campaign.get_player_image, min_width=70,
+                    ui.Image(get_image=state.get_player_image, min_width=70,
                              flex_width=False),
-                    ui.Text(get_text=campaign.get_current_player, font_size=24,
+                    ui.Text(get_text=state.get_current_player, font_size=24,
                             padding=15, valign='bottom'),
                 ).set_min_height(70).set_flex_height(False),
                 chat.ChatText(self.campaign, multiline=True),
                 chat.ChatInput(
-                    self.campaign, self.api_server, self.focus_manager,
+                    self.state, self.api_server, self.focus_manager,
                     min_height=100, flex_height=False)
             ).set_background((40, 40, 40))
              .set_min_width(300)
@@ -95,7 +96,7 @@ class Manager(object):
 
     @property
     def is_master(self):
-        return self.player is None
+        return self.state.is_master
 
     @property
     def pan_speed(self):
@@ -121,13 +122,13 @@ class Manager(object):
         elif symbol == key.G:
             self.map.toggle_grid()
         elif symbol == key.PAGEDOWN and self.is_master:
-            self.campaign.next_page()
+            self.state.next_page()
             self.map.scale_to_fit()
         elif symbol == key.PAGEUP and self.is_master:
-            self.campaign.prev_page()
+            self.state.prev_page()
             self.map.scale_to_fit()
         elif symbol == key.P and self.is_master:
-            self.campaign.set_players_page(self.campaign.master_page)
+            self.campaign.set_players_page(self.state.current_page_idx)
         else:
             return EVENT_UNHANDLED
 
@@ -178,9 +179,11 @@ class Manager(object):
             veils = params['veils']
             self.campaign.pages[page_id].set_veils(veils)
         elif method == 'player_chat':
+            assert self.state.is_master
             message = params['message']
             self.campaign.add_chat(message)
         elif method == 'new_chat':
+            assert not self.state.is_master
             print(request)
             message = params['message']
             self.campaign.add_chat(message)
@@ -245,11 +248,12 @@ def master_main(campaign_dir):
     print('Address: {}'.format(ip))
 
     resource_provider = LocalResourceProvider(campaign_dir)
-    campaign = Campaign(resource_provider, None)
+    campaign = Campaign(resource_provider)
+    state = State(campaign, player=None)
     res_server = resserver.ResourceServer(campaign_dir, campaign)
     api_server = apiserver.ApiServer()
 
-    manager = Manager(campaign, api_server, None)
+    manager = Manager(state, api_server)
 
     pyglet.app.run()
 
@@ -275,8 +279,9 @@ def player_main(address, player, port):
     api_server.send(request)
 
     resource_provider = RemoteResourceProvider(master_address)
-    campaign = Campaign(resource_provider, player)
-    manager = Manager(campaign, api_server, player)
+    campaign = Campaign(resource_provider)
+    state = State(campaign, player)
+    manager = Manager(state, api_server)
 
     pyglet.app.run()
 

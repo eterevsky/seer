@@ -28,7 +28,9 @@
       "text": "\u042d\u0442\u043e \u0447\u0430\u0442",
       "time": 1592163024.45912
     },
-    {"player": null, "text": "Test", "time": 1593353324.6678882}
+    {"player": null, "text": "Test", "time": 1593353324.6678882},
+    {"player": null, "text": "abc", "time": 1593367818.2185779},
+    {"player": null, "text": "test", "time": 1593368246.661029}
   ],
   "fragments": {
     "hero-1": {
@@ -68,7 +70,7 @@
         {
           "fragment_id": "hero-1",
           "id": 2,
-          "position": [13.314520825763614, 19.00703138278103]
+          "position": [14.058638472822437, 19.345266676898678]
         },
         {
           "fragment_id": "hero-2",
@@ -78,13 +80,17 @@
       ],
       "veils": [
         {"covered": true, "maxx": 7, "maxy": 21, "minx": 3, "miny": 15},
-        {"covered": true, "maxx": 17, "maxy": 21, "minx": 13, "miny": 15}
+        {"covered": false, "maxx": 17, "maxy": 21, "minx": 13, "miny": 15}
       ]
     },
     {
       "tokens": [
         {"fragment_id": "map-camp", "id": 4},
-        {"fragment_id": "hero-1", "id": 5, "position": [10, 6]},
+        {
+          "fragment_id": "hero-1",
+          "id": 5,
+          "position": [9.458823529411763, 6.947058823529412]
+        },
         {"fragment_id": "hero-2", "id": 6, "position": [18, 5]}
       ]
     }

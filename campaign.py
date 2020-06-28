@@ -1,11 +1,10 @@
-"""The representation of the game state."""
+"""The representation of the shared game state."""
 
 import datetime
 import json
 import os.path
 import pyglet
 import time
-
 
 import saviour
 
@@ -158,13 +157,23 @@ class Page(object):
             if (veil['minx'] < x < veil['maxx'] and
                 veil['miny'] < y < veil['maxy']):
                 veil['covered'] = not veil['covered']
-        self._dispatcher.dispatch_event('on_veils_updated', self._id, self.veils)
+        self._dispatcher.dispatch_event(
+            'on_veils_updated', self._id, self.veils)
+
+    def find_token(self, x, y) -> Token:
+        for token in self.tokens:
+            if token.is_token:
+                tx, ty = token.position
+                if (tx <= x <= tx + token.fragment.width and
+                    ty <= y <= ty + token.fragment.height):
+                    return token
+        return None
+
 
 
 class Campaign(pyglet.event.EventDispatcher):
 
-    def __init__(self, resource_provider, player):
-        self.player = player
+    def __init__(self, resource_provider):
         self._resource_provider = resource_provider
         with resource_provider.open('data.json') as data:
             self._data = json.load(data)
@@ -184,30 +193,13 @@ class Campaign(pyglet.event.EventDispatcher):
             for token in page.tokens:
                 self.tokens[token.id] = token
 
-    def get_current_player(self):
-        return self.player or 'Aengus'
-
-    def get_player_image(self, player=None):
-        if player is None:
-            player = self.get_current_player()
+    def get_player_image(self, player):
         fragment_id = self._data['players'][player]['fragment_id']
         return self.fragments[fragment_id].image
 
     @property
-    def is_master(self) -> bool:
-        return self.player is None
-
-    @property
-    def master_page(self):
-        return self._data['master_page']
-
-    @property
-    def current_page(self):
-        if self.player is None:
-            idx = self._data['master_page']
-        else:
-            idx = self._data['players_page']
-        return self.pages[idx]
+    def players_page_idx(self):
+        return self._data['players_page']
 
     def find_token(self, x, y) -> Token:
         for token in self.current_page.tokens:
@@ -218,15 +210,6 @@ class Campaign(pyglet.event.EventDispatcher):
                     return token
         return None
 
-    def next_page(self):
-        if (self.player is None and
-            self._data['master_page'] + 1 < len(self.pages)):
-            self._data['master_page'] += 1
-
-    def prev_page(self):
-        if self.player is None and self._data['master_page'] > 0:
-            self._data['master_page'] -= 1
-
     def set_players_page(self, i):
         self._data['players_page'] = i
         self.dispatch_event('on_page_changed', i)
@@ -235,8 +218,8 @@ class Campaign(pyglet.event.EventDispatcher):
         with self._resource_provider.open_write('data.json') as wfile:
             saviour.save_json(self._data, wfile)
 
-    def add_chat(self, message, player=None):
-        if self.is_master:
+    def add_chat(self, message):
+        if 'time' not in message:
             message['time'] = time.time()
         if 'chat' not in self._data:
             self._data['chat'] = []
