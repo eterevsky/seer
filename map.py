@@ -11,7 +11,6 @@ class Map(ui.View):
     def __init__(self, state, background=(0, 0, 0), **kwargs):
         super().__init__(background=background, **kwargs)
         self.state = state
-        self._dragging_token = None
         self._tx = 0
         self._ty = 0
         self._scale = 70
@@ -255,12 +254,12 @@ class Map(ui.View):
 
         token = self.state.current_page.find_token(x, y)
         if token is not None and token.controlled_by(self.state.player):
-            self._dragging_token = token
+            self.state.dragged_token = token
             tx, ty = token.position
-            self._dragging_token_offset = (x - tx, y - ty)
+            self._dragged_token_offset = (x - tx, y - ty)
 
     def on_mouse_drag(self, screen_x, screen_y, dx, dy, buttons, modifiers):
-        if self._dragging_token is None: return
+        if self.state.dragged_token is None: return
         if not (buttons & mouse.LEFT):
             # left button not pressed
             return
@@ -269,17 +268,17 @@ class Map(ui.View):
             return
 
         x, y = self.screen_to_map(screen_x, screen_y)
-        ox, oy = self._dragging_token_offset
+        ox, oy = self._dragged_token_offset
         tx, ty = x - ox, y - oy
 
-        self._dragging_token.set_temp_position(tx, ty)
+        self.state.dragged_token.set_temp_position(tx, ty)
         return True
 
     def on_mouse_release(self, x, y, button, modifiers):
-        if button == mouse.LEFT and self._dragging_token is not None:
+        if button == mouse.LEFT and self.state.dragged_token is not None:
             align = modifiers & (key.LSHIFT | key.RSHIFT)
-            self._dragging_token.position_from_temp(align=align)
-            self._dragging_token = None
+            self.state.dragged_token.position_from_temp(align=align)
+            self.state.dragged_token = None
 
 
 
