@@ -30,53 +30,36 @@
     },
     {"player": null, "text": "Test", "time": 1593353324.6678882},
     {"player": null, "text": "abc", "time": 1593367818.2185779},
-    {"player": null, "text": "test", "time": 1593368246.661029}
+    {"player": null, "text": "test", "time": 1593368246.661029},
+    {"player": null, "text": "Hello", "time": 1593381395.438505}
   ],
   "fragments": {
     "hero-1": {
       "height": 1,
       "path": "tokens/HeroTokens2/1.png",
-      "player": "Aengus",
       "type": "token-char",
       "width": 1
     },
     "hero-2": {
       "height": 1,
       "path": "tokens/HeroTokens2/2.png",
-      "player": "El",
       "type": "token-char",
       "width": 1
     },
-    "map-camp": {
-      "height": 16,
-      "path": "maps/BanditCamp.jpg",
-      "position": [0, 0],
-      "type": "tile",
-      "width": 23
-    },
+    "map-camp": {"height": 16, "path": "maps/BanditCamp.jpg", "type": "tile", "width": 23},
     "map-shipyard": {
       "height": 23,
       "path": "maps/Shipyard (23x16) Base Map, Day.jpg",
-      "position": [0, 0],
       "type": "tile",
       "width": 23
     }
   },
-  "master_page": 0,
   "pages": [
     {
       "tokens": [
-        {"fragment_id": "map-shipyard", "id": 1},
-        {
-          "fragment_id": "hero-1",
-          "id": 2,
-          "position": [12.164520825763612, 18.80409020631044]
-        },
-        {
-          "fragment_id": "hero-2",
-          "id": 3,
-          "position": [16.741293357276902, 19.075822655794994]
-        }
+        {"fragment": "map-shipyard", "id": 1, "position": [0, 0]},
+        {"character": "pc-aengus", "id": 2, "position": [10, 19]},
+        {"character": "pc-el", "id": 3, "position": [16, 20]}
       ],
       "veils": [
         {"covered": true, "maxx": 7, "maxy": 21, "minx": 3, "miny": 15},
@@ -85,17 +68,26 @@
     },
     {
       "tokens": [
-        {"fragment_id": "map-camp", "id": 4},
-        {
-          "fragment_id": "hero-1",
-          "id": 5,
-          "position": [9.458823529411763, 6.947058823529412]
-        },
-        {"fragment_id": "hero-2", "id": 6, "position": [18, 5]}
+        {"fragment": "map-camp", "id": 4, "position": [0, 0]},
+        {"character": "pc-aengus", "id": 5, "position": [9, 7]},
+        {"character": "pc-el", "id": 6, "position": [20, 8]}
       ]
     }
   ],
-  "players": {"Aengus": {"fragment_id": "hero-1"}, "El": {"fragment_id": "hero-2"}},
+  "characters": {
+    "pc-aengus": {
+      "fragment": "hero-1",
+      "name": "Aengus",
+      "player": "Aengus",
+      "maxhp": 20,
+      "hp": 10
+    },
+    "pc-el": {"fragment": "hero-2", "name": "El", "player": "El", "maxhp": 25, "hp": 20}
+  },
+  "players": {
+    "Aengus": {"default_character": "pc-aengus"},
+    "El": {"default_character": "pc-el"}
+  },
   "players_page": 0,
   "title": "Campaign example"
 }

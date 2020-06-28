@@ -15,7 +15,7 @@ class Fragment(object):
     May contain the default values for controlling player and position.
     """
 
-    def __init__(self, data, provider, id):
+    def __init__(self, id: str, data: dict, provider):
         self.id = id
         self._data = data
         fname = os.path.basename(data['path'])
@@ -60,6 +60,22 @@ class Fragment(object):
             return self.image.width / self.width
 
 
+class Character(object):
+    """Represents any character, NPC or monster."""
+
+    def __init__(self, id: str, data: dict, campaign):
+        self.id = id
+        self._data = data
+        self.fragment = campaign.fragments[self._data['fragment']]
+
+    def controlled_by(self, player):
+        return self._data.get('player', None) == player
+
+    @property
+    def name(self):
+        return self._data['name']
+
+
 class Token(object):
     """A token or a map tile added to a page.
 
@@ -68,10 +84,18 @@ class Token(object):
     the same `Fragment`, but separate Token.
     """
 
-    def __init__(self, data, fragment, campaign):
+    def __init__(self, data, campaign):
         self._data = data
-        self.fragment = fragment
         self._campaign = campaign
+        assert 'fragment' in self._data or 'character' in self._data
+        if 'fragment' in self._data:
+            self._fragment = self._campaign.fragments[self._data['fragment']]
+        else:
+            self._fragment = None
+        if 'character' in self._data:
+            self.character = self._campaign.characters[self._data['character']]
+        else:
+            self.character = None
         self._temp_position = None
 
     def update_data(self, data, notify=False):
@@ -79,6 +103,17 @@ class Token(object):
         self._temp_position = None
         if notify:
             self._campaign.dispatch_event('on_token_updated', self)
+
+    @property
+    def is_character(self) -> bool:
+        return 'character' in self._data
+
+    @property
+    def fragment(self):
+        if self._fragment is not None:
+            return self._fragment
+        else:
+            return self.character.fragment
 
     @property
     def id(self):
@@ -99,7 +134,7 @@ class Token(object):
 
     @property
     def position(self):
-        return self._data.get('position', self.fragment.position)
+        return self._data['position']
 
     def set_position(self, x, y, notify=True):
         self._temp_position = None
@@ -120,7 +155,9 @@ class Token(object):
         return self.type.startswith('token')
 
     def controlled_by(self, player):
-        return player is None or player == self.player
+        return (player is None or
+                (self.character is not None and
+                 self.character.controlled_by(player)))
 
     def move_temp(self, dx, dy):
         x, y = self.temp_position
@@ -134,15 +171,13 @@ class Token(object):
 
 
 class Page(object):
-    def __init__(self, id, data, campaign):
-        self._id = id
+    def __init__(self, id: str, data: dict, campaign):
+        self.id = id
         self._data = data
-        self._dispatcher = campaign
+        self._campaign = campaign
         self.tokens = []
-        for token_cfg in data['tokens']:
-            token = Token(token_cfg,
-                          campaign.fragments[token_cfg['fragment_id']],
-                          campaign)
+        for token_data in data['tokens']:
+            token = Token(token_data, campaign)
             self.tokens.append(token)
 
     @property
@@ -157,8 +192,7 @@ class Page(object):
             if (veil['minx'] < x < veil['maxx'] and
                 veil['miny'] < y < veil['maxy']):
                 veil['covered'] = not veil['covered']
-        self._dispatcher.dispatch_event(
-            'on_veils_updated', self._id, self.veils)
+        self._campaign.dispatch_event('on_veils_updated', self.id, self.veils)
 
     def find_token(self, x, y) -> Token:
         for token in self.tokens:
@@ -169,6 +203,13 @@ class Page(object):
                     return token
         return None
 
+
+class Player(object):
+    def __init__(self, name, data, campaign):
+        self.name = name
+        self._data = data
+        self.default_character = campaign.characters[
+            self._data['default_character']]
 
 
 class Campaign(pyglet.event.EventDispatcher):
@@ -182,35 +223,33 @@ class Campaign(pyglet.event.EventDispatcher):
                 datetime.datetime.now().strftime('%Y-%m-%dT%H%M%S'))
             resource_provider.mkdir('backups')
             resource_provider.copy_file('data.json', backup_fname)
+
         self.fragments = {}
         for id, frag_data in self._data['fragments'].items():
-            self.fragments[id] = Fragment(frag_data, self._resource_provider, id)
+            self.fragments[id] = Fragment(id, frag_data, self._resource_provider)
+
+        self.characters = {}
+        for id, char_data in self._data['characters'].items():
+            self.characters[id] = Character(id, char_data, self)
+
         self.pages = []
         self.tokens = {}
-        for (i, page_cfg) in enumerate(self._data['pages']):
-            page = Page(i, page_cfg, self)
+        for (i, page_data) in enumerate(self._data['pages']):
+            page = Page(i, page_data, self)
             self.pages.append(page)
             for token in page.tokens:
                 self.tokens[token.id] = token
 
-    def get_player_image(self, player):
-        fragment_id = self._data['players'][player]['fragment_id']
-        return self.fragments[fragment_id].image
+        self.players = {}
+        for player, player_data in self._data['players'].items():
+            self.players[player] = Player(player, player_data, self)
 
     @property
     def players_page_idx(self):
         return self._data['players_page']
 
-    def find_token(self, x, y) -> Token:
-        for token in self.current_page.tokens:
-            if token.is_token:
-                tx, ty = token.position
-                if (tx <= x <= tx + token.fragment.width and
-                    ty <= y <= ty + token.fragment.height):
-                    return token
-        return None
-
-    def set_players_page(self, i):
+    @players_page_idx.setter
+    def players_page_idx(self, i):
         self._data['players_page'] = i
         self.dispatch_event('on_page_changed', i)
 

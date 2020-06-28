@@ -258,6 +258,9 @@ class Map(ui.View):
             tx, ty = token.position
             self._dragged_token_offset = (x - tx, y - ty)
 
+        if self.state.is_master and token is not None and token.is_character:
+            self.state.current_char = token.character
+
     def on_mouse_drag(self, screen_x, screen_y, dx, dy, buttons, modifiers):
         if self.state.dragged_token is None: return
         if not (buttons & mouse.LEFT):

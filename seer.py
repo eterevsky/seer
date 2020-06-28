@@ -57,7 +57,7 @@ class RemoteResourceProvider(object):
 
 
 class Manager(object):
-    def __init__(self, state, api_server):
+    def __init__(self, state: State, api_server):
         self.state = state
 
         self.campaign = state.campaign
@@ -74,9 +74,9 @@ class Manager(object):
         self.layout = ui.RootLayout(self.window, ui.HStackLayout(
             ui.VStackLayout(
                 ui.HStackLayout(
-                    ui.Image(get_image=state.get_player_image, min_width=70,
+                    ui.Image(get_image=state.get_current_char_image, min_width=70,
                              flex_width=False),
-                    ui.Text(get_text=state.get_current_player, font_size=24,
+                    ui.Text(get_text=state.get_current_char_name, font_size=24,
                             padding=15, valign='bottom'),
                 ).set_min_height(70).set_flex_height(False),
                 chat.ChatText(self.campaign, multiline=True),
@@ -128,7 +128,7 @@ class Manager(object):
             self.state.prev_page()
             self.map.scale_to_fit()
         elif symbol == key.P and self.is_master:
-            self.campaign.set_players_page(self.state.current_page_idx)
+            self.campaign.players_page_idx = self.state.current_page_idx
         else:
             return EVENT_UNHANDLED
 
@@ -168,11 +168,11 @@ class Manager(object):
         elif method == 'token_temp_position_changed':
             token = self.campaign.tokens[params['token_id']]
             position = params['position']
-            if token is not self.map._dragging_token:
+            if token is not self.state.dragged_token:
                 token.set_temp_position(
                     position[0], position[1], notify=self.is_master)
         elif method == 'page_changed':
-            self.campaign.set_players_page(params['players_page'])
+            self.campaign.players_page_idx = params['players_page']
             self.map.scale_to_fit()
         elif method == 'veils_updated':
             page_id = params['page_id']
