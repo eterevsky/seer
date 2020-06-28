@@ -148,9 +148,16 @@ class Map(ui.View):
                  not self.show_veils)): continue
             minx, miny = self.map_to_screen(veil['minx'], veil['miny'])
             maxx, maxy = self.map_to_screen(veil['maxx'], veil['maxy'])
+            if (minx >= self.pane.x1 or maxx <= self.pane.x0 or
+                miny >= self.pane.y1 or maxy <= self.pane.y0):
+                continue
+            clamp_x0 = max(self.pane.x0, minx)
+            clamp_y0 = max(self.pane.y0, miny)
+            clamp_x1 = min(self.pane.x1, maxx)
+            clamp_y1 = min(self.pane.y1, maxy)
             triangles.extend([
-                minx, miny, maxx, miny, maxx, maxy,
-                minx, maxy, minx, miny, maxx, maxy
+                clamp_x0, clamp_y0, clamp_x1, clamp_y0, clamp_x1, clamp_y1,
+                clamp_x0, clamp_y1, clamp_x0, clamp_y0, clamp_x1, clamp_y1
             ])
             if self._campaign.is_master:
                 if veil['covered']:
@@ -161,12 +168,17 @@ class Map(ui.View):
                 else:
                     colors.extend([64] * 18)
                 if self.show_veils:
-                    self._veil_lines.extend([
-                        minx, miny, maxx, miny,
-                        maxx, miny, maxx, maxy,
-                        maxx, maxy, minx, maxy,
-                        minx, maxy, minx, miny
-                    ])
+                    for x0, y0, x1, y1 in (
+                        (clamp_x0, clamp_y0, clamp_x1, clamp_y0),
+                        (clamp_x1, clamp_y0, clamp_x1, clamp_y1),
+                        (clamp_x1, clamp_y1, clamp_x0, clamp_y1),
+                        (clamp_x0, clamp_y1, clamp_x0, clamp_y0)
+                    ):
+                        if not (x0 <= self.pane.x0 and x1 <= self.pane.x0 or
+                                x0 >= self.pane.x1 and x1 >= self.pane.x1 or
+                                y0 <= self.pane.y0 and y1 <= self.pane.y0 or
+                                y1 >= self.pane.y1 and y1 >= self.pane.y1):
+                            self._veil_lines.extend([x0, y0, x1, y1])
             else:
                 colors.extend([255] * 18)
 

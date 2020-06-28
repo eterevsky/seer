@@ -27,7 +27,8 @@
       "player": null,
       "text": "\u042d\u0442\u043e \u0447\u0430\u0442",
       "time": 1592163024.45912
-    }
+    },
+    {"player": null, "text": "Test", "time": 1593353324.6678882}
   ],
   "fragments": {
     "hero-1": {
@@ -67,7 +68,7 @@
         {
           "fragment_id": "hero-1",
           "id": 2,
-          "position": [12.927604937913147, 19.264975308014673]
+          "position": [13.314520825763614, 19.00703138278103]
         },
         {
           "fragment_id": "hero-2",
@@ -77,7 +78,7 @@
       ],
       "veils": [
         {"covered": true, "maxx": 7, "maxy": 21, "minx": 3, "miny": 15},
-        {"covered": false, "maxx": 17, "maxy": 21, "minx": 13, "miny": 15}
+        {"covered": true, "maxx": 17, "maxy": 21, "minx": 13, "miny": 15}
       ]
     },
     {
