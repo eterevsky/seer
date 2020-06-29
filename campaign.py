@@ -75,6 +75,14 @@ class Character(object):
     def name(self):
         return self._data['name']
 
+    @property
+    def hp(self):
+        return self._data['hp']
+
+    @property
+    def maxhp(self):
+        return self._data['maxhp']
+
 
 class Token(object):
     """A token or a map tile added to a page.

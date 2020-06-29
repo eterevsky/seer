@@ -12,6 +12,7 @@ import time
 import apiserver
 from campaign import Campaign
 import chat
+import healthbar
 from map import Map
 import resserver
 from state import State
@@ -74,11 +75,13 @@ class Manager(object):
         self.layout = ui.RootLayout(self.window, ui.HStackLayout(
             ui.VStackLayout(
                 ui.HStackLayout(
+                    ui.Text(get_text=state.get_current_char_name, font_size=24,
+                            padding=8, valign='bottom'),
                     ui.Image(get_image=state.get_current_char_image, min_width=70,
                              flex_width=False),
-                    ui.Text(get_text=state.get_current_char_name, font_size=24,
-                            padding=15, valign='bottom'),
                 ).set_min_height(70).set_flex_height(False),
+                ui.Spacer(min_height=15, flex_height=False),
+                healthbar.HealthBar(get_char=state.get_current_char),
                 chat.ChatText(self.campaign, multiline=True),
                 chat.ChatInput(
                     self.state, self.api_server, self.focus_manager,

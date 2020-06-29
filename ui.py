@@ -460,28 +460,47 @@ class TextInput(View):
 class Text(View):
     def __init__(
             self, text='', get_text=None, color=(192, 192, 192, 255),
-            font_size=None, valign='top',
+            font_size=None, valign='top', kerning=0, align='left',
             padding=5, multiline=False, **kwargs):
         super().__init__(**kwargs)
         self.document = pyglet.text.document.UnformattedDocument(text)
-        self.document.set_style(0, 0, {'color': color, 'font_size': font_size})
+        self._style = {
+            'color': color,
+            'font_size': font_size,
+            'kerning': kerning,
+            'align': align
+        }
+        self.document.set_style(0, 0, self._style)
         self.layout = None
         self.multiline = multiline
         self.padding = padding
         self.get_text = get_text
+        self.document.text = text
         self.valign = valign
+
+
+    def _create_layout(self, width, height, offset_x, offset_y):
+        print('_create_layout', width, height, offset_x, offset_y)
+        self.layout = pyglet.text.layout.IncrementalTextLayout(
+            self.document, width - 2 * self.padding,
+            height - 2 * self.padding,
+            multiline=self.multiline, wrap_lines=True)
+        self.layout.content_valign=self.valign
+        self.layout.x = offset_x + self.padding
+        self.layout.y = offset_y + self.padding
 
     def attach(self, pane):
         super().attach(pane)
-        self.layout = pyglet.text.layout.IncrementalTextLayout(
-            self.document, pane.width - 2 * self.padding,
-            pane.height - 2 * self.padding,
-            multiline=self.multiline, wrap_lines=True)
-        self.layout.content_valign=self.valign
-        self.layout.x = pane.x0 + self.padding
-        self.layout.y = pane.y0 + self.padding
+        if pane.width > 0:
+            self._create_layout(pane.width, pane.height, pane.x0, pane.y0)
 
     def on_resize(self, width, height, offset_x, offset_y):
+        if width <= 0:
+            self.layout = None
+            return
+        if self.layout is None:
+            self._create_layout(width, height, offset_x, offset_y)
+            return
         self.layout.width = width - 2 * self.padding
         self.layout.height = height - 2 * self.padding
         self.layout.x = offset_x + self.padding

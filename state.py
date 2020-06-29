@@ -27,6 +27,9 @@ class State(object):
     def is_master(self):
         return self.player is None
 
+    def get_current_char(self):
+        return self.current_char
+
     def get_current_char_name(self):
         if self.current_char is not None:
             return self.current_char.name
