@@ -37,7 +37,8 @@
     {"player": null, "text": "abc", "time": 1593958157.1373508},
     {"player": null, "text": "abc", "time": 1593959387.653134},
     {"player": null, "text": "abc", "time": 1593960801.2492118},
-    {"player": null, "text": "abc", "time": 1593962991.1970508}
+    {"player": null, "text": "abc", "time": 1593962991.1970508},
+    {"player": null, "text": "Abc", "time": 1593980611.291519}
   ],
   "fragments": {
     "hero-1": {
@@ -67,12 +68,12 @@
         {
           "character": "pc-aengus",
           "id": 2,
-          "position": [10.170996732026145, 19.254616013071896]
+          "position": [10.06607173571183, 19.062949346405226]
         },
         {
           "character": "pc-el",
           "id": 3,
-          "position": [16.074547686153284, 19.07918447131558]
+          "position": [15.988081520739751, 19.07918447131558]
         }
       ],
       "veils": [
@@ -88,7 +89,7 @@
           "id": 5,
           "position": [10.15, 5.985294117647058]
         },
-        {"character": "pc-el", "id": 6, "position": [20, 8]}
+        {"character": "pc-el", "id": 6, "position": [20.011111111111113, 8.0]}
       ]
     }
   ],

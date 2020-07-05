@@ -3,6 +3,7 @@ import event
 import pyglet
 from pyglet import gl
 from pyglet.window import key
+from pyglet.event import EVENT_HANDLED
 from typing import List, Union
 
 
@@ -12,7 +13,6 @@ class Pane(event.EventDispatcher):
     This class dispatches mouse events related to the controlled area and draws
     its background.
     """
-
     def __init__(self, x0, y0, x1, y1, background=None):
         self.x0, self.y0 = x0, y0
         self.x1, self.y1 = x1, y1
@@ -25,7 +25,8 @@ class Pane(event.EventDispatcher):
         self._prepare_background_draw()
 
     def __str__(self):
-        return 'Pane({}, {}, {}, {})'.format(self.x0, self.y0, self.x1, self.y1)
+        return 'Pane({}, {}, {}, {})'.format(self.x0, self.y0, self.x1,
+                                             self.y1)
 
     @property
     def width(self):
@@ -45,19 +46,19 @@ class Pane(event.EventDispatcher):
         self._prepare_background_draw()
 
     def update_layout(self):
-        self.dispatch_event(
-            'on_resize', self.width, self.height, self.x0, self.y0)
-        self.dispatch_event(
-            'on_dims_change', self.x0, self.y0, self.x1, self.y0)
+        self.dispatch_event('on_resize', self.width, self.height, self.x0,
+                            self.y0)
+        self.dispatch_event('on_dims_change', self.x0, self.y0, self.x1,
+                            self.y0)
 
     def change_dims(self, x0, y0, x1, y1):
         self.x0, self.y0 = x0, y0
         self.x1, self.y1 = x1, y1
         self._prepare_background_draw()
-        self.dispatch_event(
-            'on_resize', self.width, self.height, self.x0, self.y0)
-        self.dispatch_event(
-            'on_dims_change', self.x0, self.y0, self.x1, self.y0)
+        self.dispatch_event('on_resize', self.width, self.height, self.x0,
+                            self.y0)
+        self.dispatch_event('on_dims_change', self.x0, self.y0, self.x1,
+                            self.y0)
 
     def change_content_dims(self, min_width=0, min_height=0, flex_width=True,
                             flex_height=True):
@@ -71,8 +72,8 @@ class Pane(event.EventDispatcher):
         if self._background is None:
             return
         self._triangles = [
-            self.x0, self.y0,  self.x1, self.y0,  self.x1, self.y1,
-            self.x0, self.y0,  self.x1, self.y1,  self.x0, self.y1
+            self.x0, self.y0, self.x1, self.y0, self.x1, self.y1, self.x0,
+            self.y0, self.x1, self.y1, self.x0, self.y1
         ]
         self._colors = self._background * 6
 
@@ -81,10 +82,8 @@ class Pane(event.EventDispatcher):
             return
 
         # print('_draw_bakground', self._triangles, self._colors)
-        pyglet.graphics.draw(
-            6, pyglet.gl.GL_TRIANGLES,
-            ('v2f', self._triangles),
-            ('c3B', self._colors))
+        pyglet.graphics.draw(6, pyglet.gl.GL_TRIANGLES,
+                             ('v2f', self._triangles), ('c3B', self._colors))
 
     @event.priority(1)
     def on_draw(self):
@@ -124,14 +123,12 @@ Pane.register_event_type('on_dims_change')
 Pane.register_event_type('on_resize')
 Pane.register_event_type('on_content_resize')
 
-
 DUMMY_PANE = Pane(0, 0, 0, 0)
 
 
 class View(object):
-    def __init__(
-            self, min_width=0, min_height=0, flex_width=True, flex_height=True,
-            background=None, get_hidden=None):
+    def __init__(self, min_width=None, min_height=None, flex_width=None,
+                 flex_height=None, background=None, get_hidden=None):
         self.pane = DUMMY_PANE
         self._min_width = min_width
         self._min_height = min_height
@@ -141,10 +138,8 @@ class View(object):
         self.get_hidden = get_hidden
 
     def __str__(self):
-        return '{}[{}]{}'.format(
-            self.__class__.__name__,
-            self.pane,
-            '[hidden]' if self.hidden else '')
+        return '{}[{}]{}'.format(self.__class__.__name__, self.pane,
+                                 '[hidden]' if self.hidden else '')
 
     @property
     def hidden(self):
@@ -152,7 +147,13 @@ class View(object):
 
     @property
     def min_width(self):
-        return 0 if self.hidden else self._min_width
+        if self.hidden or self._min_width is None:
+            return 0
+        else:
+            return self._min_width
+
+    def min_width_set(self):
+        return self._min_width is not None
 
     def set_min_width(self, value):
         self._min_width = value
@@ -161,7 +162,13 @@ class View(object):
 
     @property
     def min_height(self):
-        return 0 if self.hidden else self._min_height
+        if self.hidden or self._min_height is None:
+            return 0
+        else:
+            return self._min_height
+
+    def min_height_set(self):
+        return self._min_height is not None
 
     def set_min_height(self, value):
         self._min_height = value
@@ -170,7 +177,11 @@ class View(object):
 
     @property
     def flex_width(self):
-        return not self.hidden and self._flex_width
+        return not self.hidden and (self._flex_width is None
+                                    or self._flex_width)
+
+    def flex_width_set(self):
+        return self._flex_width is not None
 
     def set_flex_width(self, value: bool):
         self._flex_width = value
@@ -179,7 +190,11 @@ class View(object):
 
     @property
     def flex_height(self):
-        return not self.hidden and self._flex_height
+        return not self.hidden and (self._flex_height is None
+                                    or self._flex_height)
+
+    def flex_height_set(self):
+        return self._flex_height is not None
 
     def set_flex_height(self, value: bool):
         self._flex_height = value
@@ -203,17 +218,15 @@ class View(object):
         self.pane = DUMMY_PANE
 
     def _update_dims(self):
-        self.pane.change_content_dims(
-            self.min_width, self.min_height, self.flex_width, self.flex_height)
+        self.pane.change_content_dims(self.min_width, self.min_height,
+                                      self.flex_width, self.flex_height)
 
 
 class RootLayout(object):
-    def __init__(self,
-                 window: pyglet.window.Window,
-                 child: View = None,
+    def __init__(self, window: pyglet.window.Window, child: View = None,
                  background=None):
-        self.child_pane = Pane(
-            0, 0, window.width, window.height, background=background)
+        self.child_pane = Pane(0, 0, window.width, window.height,
+                               background=background)
         self._child = child
         if child is not None:
             child.attach(self.child_pane)
@@ -276,46 +289,34 @@ class Orientation(enum.Enum):
 
 
 class StackLayout(View):
-    def __init__(self, orientation: Orientation, *children, min_width=None,
-                 min_height=None,
-                 flex_width=None, flex_height=None, **kwargs):
-        # We need to know which of min_ and flex_ are set explicitly by the user
-        if min_width is not None:
-            kwargs['min_width'] = min_width
-        if min_height is not None:
-            kwargs['min_height'] = min_height
-        if flex_width is not None:
-            kwargs['flex_width'] = flex_width
-        if flex_height is not None:
-            kwargs['flex_height'] = flex_height
+    def __init__(self, orientation: Orientation, *children, **kwargs):
         super().__init__(**kwargs)
 
         self.orientation = orientation
-        self.children = []
+        self.children = children
         self.mouseover_pane = None
         self._dragging_pane = None
         self._dragging_button = 0
-        min_dim = 0
-        flex = False
-        for child in children:
-            self._add_child_noresize(child)
-            if self.orientation == Orientation.HORIZONTAL:
-                min_dim += child.min_width
-                flex = flex or child.flex_width
-            else:
-                min_dim += child.min_height
-                flex = flex or child.flex_height
 
-        if self.orientation == Orientation.HORIZONTAL:
-            if min_width is None:
-                self.set_min_width(min_dim)
-            if flex_width is None:
-                self.set_flex_width(flex)
-        else:
-            if min_height is None:
-                self.set_min_height(min_dim)
-            if flex_width is None:
-                self.set_flex_height(flex)
+        if not self.min_width_set():
+            if self.orientation == Orientation.HORIZONTAL:
+                min_width = sum(c.min_width for c in self.children)
+            else:
+                min_width = max(c.min_width for c in self.children)
+            self.set_min_width(min_width)
+
+        if not self.min_height_set():
+            if self.orientation == Orientation.VERTICAL:
+                min_height = sum(c.min_height for c in self.children)
+            else:
+                min_height = max(c.min_height for c in self.children)
+            self.set_min_height(min_height)
+
+        if not self.flex_width_set():
+            self.set_flex_width(any(c.flex_width for c in self.children))
+
+        if not self.flex_height_set():
+            self.set_flex_width(any(c.flex_height for c in self.children))
 
     def __str__(self):
         content = ''
@@ -327,16 +328,23 @@ class StackLayout(View):
 
         return '{}[{}]({})'.format(self.__class__.__name__, self.pane, content)
 
-    def _add_child_noresize(self, child):
+    def attach(self, pane: Pane):
+        super().attach(pane)
         x0, y0, x1, y1 = self.pane.x0, self.pane.y0, self.pane.x1, self.pane.y1
         if self.orientation == Orientation.HORIZONTAL:
             y0 = y1
         else:
             x1 = x0
-        pane = Pane(x0, y0, x1, y1)
-        child.attach(pane)
-        pane.push_handlers(self.on_content_resize)
-        self.children.append(child)
+        for child in self.children:
+            pane = Pane(x0, y0, x1, y1)
+            child.attach(pane)
+            pane.push_handlers(self.on_content_resize)
+
+    def detach(self):
+        super().deattach()
+        for child in self.children:
+            child.pane.remove_handlers(self)
+            child.detach()
 
     def add_child(self, child: View):
         self._add_child_noresize(child)
@@ -344,8 +352,8 @@ class StackLayout(View):
 
     def _find_child_pane(self, x, y) -> Pane:
         """Returns the child contining (x, y) or None."""
-        if (self.mouseover_pane is not None and
-                self.mouseover_pane.contains(x, y)):
+        if (self.mouseover_pane is not None
+                and self.mouseover_pane.contains(x, y)):
             return self.mouseover_pane
         for child in self.children:
             if child.pane.contains(x, y):
@@ -373,8 +381,8 @@ class StackLayout(View):
             self._dragging_pane = self._find_child_pane(x, y)
 
         if self._dragging_pane:
-            self._dragging_pane.dispatch_event(
-                'on_mouse_drag', x, y, dx, dy, buttons, modifiers)
+            self._dragging_pane.dispatch_event('on_mouse_drag', x, y, dx, dy,
+                                               buttons, modifiers)
 
     def on_mouse_motion(self, x, y, dx, dy):
         pane = self._find_child_pane(x, y)
@@ -390,7 +398,8 @@ class StackLayout(View):
     def on_mouse_press(self, x, y, button, modifiers):
         pane = self._find_child_pane(x, y)
         if pane:
-            return pane.dispatch_event('on_mouse_press', x, y, button, modifiers)
+            return pane.dispatch_event('on_mouse_press', x, y, button,
+                                       modifiers)
 
     def on_mouse_release(self, x, y, button, modifiers):
         if button & self._dragging_button:
@@ -398,12 +407,14 @@ class StackLayout(View):
             self._dragging_button = 0
         pane = self._find_child_pane(x, y)
         if pane:
-            return pane.dispatch_event('on_mouse_release', x, y, button, modifiers)
+            return pane.dispatch_event('on_mouse_release', x, y, button,
+                                       modifiers)
 
     def on_mouse_scroll(self, x, y, scroll_x, scroll_y):
         pane = self._find_child_pane(x, y)
         if pane:
-            return pane.dispatch_event('on_mouse_scroll', x, y, scroll_x, scroll_y)
+            return pane.dispatch_event('on_mouse_scroll', x, y, scroll_x,
+                                       scroll_y)
 
     def on_dims_change(self, *args):
         self._resize()
@@ -437,15 +448,15 @@ class StackLayout(View):
                     next_offset = min(offset + min_dim, self.pane.x1)
                 else:
                     next_offset = offset + min_dim + extra_dim
-                pane.change_dims(
-                    x0=offset, x1=next_offset, y0=self.pane.y0, y1=self.pane.y1)
+                pane.change_dims(x0=offset, x1=next_offset, y0=self.pane.y0,
+                                 y1=self.pane.y1)
             else:
                 if extra_dim <= 0 or not flex:
                     next_offset = max(offset - min_dim, self.pane.y0)
                 else:
                     next_offset = offset - min_dim - extra_dim
-                pane.change_dims(
-                    x0=self.pane.x0, x1=self.pane.x1, y0=next_offset, y1=offset)
+                pane.change_dims(x0=self.pane.x0, x1=self.pane.x1,
+                                 y0=next_offset, y1=offset)
 
             offset = next_offset
 
@@ -460,13 +471,112 @@ class VStackLayout(StackLayout):
         super().__init__(Orientation.VERTICAL, *args, **kwargs)
 
 
+class LayersLayout(View):
+    def __init__(self, *children, **kwargs):
+        super().__init__(**kwargs)
+
+        self.children = children
+
+        if not self.min_width_set():
+            self.set_min_width(max(c.min_width for c in self.children))
+        if not self.min_height_set():
+            self.set_min_height(max(c.min_height for c in self.children))
+        if not self.flex_width_set():
+            self.set_flex_width(any(c.flex_width for c in self.children))
+        if not self.flex_height_set():
+            self.set_flex_width(any(c.flex_height for c in self.children))
+
+    def __str__(self):
+        content = ''
+        for child in self.children:
+            for line in str(child).split('\n'):
+                content += '\n  ' + line
+            content += ','
+        content += '\n'
+
+        return '{}[{}]({})'.format(self.__class__.__name__, self.pane, content)
+
+    def attach(self, pane: Pane):
+        super().attach(pane)
+        x0, y0, x1, y1 = self.pane.x0, self.pane.y0, self.pane.x1, self.pane.y1
+        for child in self.children:
+            pane = Pane(x0, y0, x1, y1)
+            child.attach(pane)
+            pane.push_handlers(self.on_content_resize)
+
+    def detach(self):
+        super().deattach()
+        for child in self.children:
+            child.pane.remove_handlers(self)
+            child.detach()
+
+    def on_draw(self):
+        for child in self.children:
+            child.pane.dispatch_event('on_draw')
+
+    def on_mouse_enter(self, x, y):
+        for child in reversed(self.children):
+            if (child.pane.dispatch_event('on_mouse_enter', x, y) is
+                    EVENT_HANDLED):
+                break
+
+    def on_mouse_leave(self, x, y):
+        for child in reversed(self.children):
+            if (child.pane.dispatch_event('on_mouse_leave', x, y) is
+                    EVENT_HANDLED):
+                break
+
+    def on_mouse_drag(self, x, y, dx, dy, buttons, modifiers):
+        for child in reversed(self.children):
+            if (child.pane.dispatch_event('on_mouse_drag', x, y, dx, dy,
+                                          buttons, modifiers) is
+                    EVENT_HANDLED):
+                break
+
+    def on_mouse_motion(self, x, y, dx, dy):
+        for child in reversed(self.children):
+            if (child.pane.dispatch_event('on_mouse_motion', x, y, dx, dy) is
+                    EVENT_HANDLED):
+                break
+
+    def on_mouse_press(self, x, y, button, modifiers):
+        for child in reversed(self.children):
+            if (child.pane.dispatch_event('on_mouse_press', x, y, button,
+                                          modifiers) is EVENT_HANDLED):
+                break
+
+    def on_mouse_release(self, x, y, button, modifiers):
+        for child in reversed(self.children):
+            if (child.pane.dispatch_event('on_mouse_release', x, y, button,
+                                          modifiers) is EVENT_HANDLED):
+                break
+
+    def on_mouse_scroll(self, x, y, scroll_x, scroll_y):
+        for child in reversed(self.children):
+            if (child.pane.dispatch_event('on_mouse_scroll', x, y, scroll_x,
+                                          scroll_y) is EVENT_HANDLED):
+                break
+
+    def on_dims_change(self, *args):
+        self._resize()
+
+    def on_content_resize(self):
+        self._resize()
+
+    def _resize(self):
+        for child in self.children:
+            child.pane.change_dims(x0=self.pane.x0, x1=self.pane.x1,
+                                   y0=self.pane.y0, y1=self.pane.y1)
+
+
 class Spacer(View):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
 
 
 class TextInput(View):
-    def __init__(self, focus_manager, text_color=(192, 192, 192, 255), **kwargs):
+    def __init__(self, focus_manager, text_color=(192, 192, 192, 255),
+                 **kwargs):
         super().__init__(**kwargs)
         self.document = pyglet.text.document.UnformattedDocument('')
         self.document.set_style(0, 0, {'color': text_color})
@@ -479,11 +589,12 @@ class TextInput(View):
         # TODO: Override detach.
         super().attach(pane)
         self.layout = pyglet.text.layout.IncrementalTextLayout(
-            self.document, pane.width - 10, pane.height - 10,
-            multiline=True, wrap_lines=True)
+            self.document, pane.width - 10, pane.height - 10, multiline=True,
+            wrap_lines=True)
         self.layout.x = pane.x0 + 5
         self.layout.y = pane.y0 + 5
-        self.caret = pyglet.text.caret.Caret(self.layout, color=self.text_color[:3])
+        self.caret = pyglet.text.caret.Caret(self.layout,
+                                             color=self.text_color[:3])
         self.caret.visible = False
         self.focus_manager.add_input(self)
 
@@ -497,20 +608,21 @@ class TextInput(View):
         self.layout.y = offset_y + 5
 
     def on_draw(self):
-        lines = [self.pane.x0 + 2.5, self.pane.y0 + 2.5,
-                 self.pane.x1 - 2.5, self.pane.y0 + 2.5,
-                 self.pane.x1 - 2.5, self.pane.y1 - 2.5,
-                 self.pane.x0 + 2.5, self.pane.y1 - 2.5]
+        lines = [
+            self.pane.x0 + 2.5, self.pane.y0 + 2.5,
+            self.pane.x1 - 2.5, self.pane.y0 + 2.5,
+            self.pane.x1 - 2.5, self.pane.y1 - 2.5,
+            self.pane.x0 + 2.5, self.pane.y1 - 2.5
+        ]  # yapf: disable
         if self.pane.mouseover:
             colors = [192, 192, 192] * (len(lines) // 2)
         else:
             colors = [128, 128, 128] * (len(lines) // 2)
 
         pyglet.gl.glLineWidth(1)
-        pyglet.graphics.draw(len(lines) // 2, pyglet.gl.GL_LINE_LOOP,
-            ('v2f', lines),
-            ('c3B', colors)
-        )
+        pyglet.graphics.draw(
+            len(lines) // 2, pyglet.gl.GL_LINE_LOOP, ('v2f', lines),
+            ('c3B', colors))
 
         self.layout.draw()
 
@@ -519,10 +631,9 @@ class TextInput(View):
 
 
 class Text(View):
-    def __init__(
-            self, text='', get_text=None, color=(192, 192, 192, 255),
-            font_size=None, valign='top', kerning=0, align='left',
-            padding=5, multiline=False, **kwargs):
+    def __init__(self, text='', get_text=None, color=(255, 255, 255, 255),
+                 font_size=None, valign='top', kerning=0, align='left',
+                 padding=5, multiline=False, **kwargs):
         super().__init__(**kwargs)
         self.document = pyglet.text.document.UnformattedDocument(text)
         self._style = {
@@ -539,14 +650,11 @@ class Text(View):
         self.document.text = text
         self.valign = valign
 
-
     def _create_layout(self, width, height, offset_x, offset_y):
-        print('_create_layout', width, height, offset_x, offset_y)
         self.layout = pyglet.text.layout.IncrementalTextLayout(
-            self.document, width - 2 * self.padding,
-            height - 2 * self.padding,
+            self.document, width - 2 * self.padding, height - 2 * self.padding,
             multiline=self.multiline, wrap_lines=True)
-        self.layout.content_valign=self.valign
+        self.layout.content_valign = self.valign
         self.layout.x = offset_x + self.padding
         self.layout.y = offset_y + self.padding
 
@@ -627,7 +735,8 @@ class FocusManager(object):
 
     def on_mouse_drag(self, x, y, dx, dy, buttons, modifiers):
         if self._focus:
-            return self._focus.caret.on_mouse_drag(x, y, dx, dy, buttons, modifiers)
+            return self._focus.caret.on_mouse_drag(x, y, dx, dy, buttons,
+                                                   modifiers)
 
     def on_text(self, text):
         if self._focus:
@@ -652,9 +761,9 @@ class FocusManager(object):
         if symbol in (key.ENTER, key.NUM_ENTER):
             return self._focus.on_return()
 
-        if symbol is not None and (
-            key.SPACE <= symbol <= key.ASCIITILDE or symbol in (
-                key.UP, key.RIGHT, key.DOWN, key.LEFT,
-                key.BACKSPACE, key.DELETE)):
+        if symbol is not None and (key.SPACE <= symbol <= key.ASCIITILDE
+                                   or symbol
+                                   in (key.UP, key.RIGHT, key.DOWN, key.LEFT,
+                                       key.BACKSPACE, key.DELETE)):
             return event.EVENT_HANDLED
         return event.EVENT_UNHANDLED
