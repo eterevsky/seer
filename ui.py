@@ -44,6 +44,12 @@ class Pane(event.EventDispatcher):
         self._background = value
         self._prepare_background_draw()
 
+    def update_layout(self):
+        self.dispatch_event(
+            'on_resize', self.width, self.height, self.x0, self.y0)
+        self.dispatch_event(
+            'on_dims_change', self.x0, self.y0, self.x1, self.y0)
+
     def change_dims(self, x0, y0, x1, y1):
         self.x0, self.y0 = x0, y0
         self.x1, self.y1 = x1, y1
@@ -125,34 +131,58 @@ DUMMY_PANE = Pane(0, 0, 0, 0)
 class View(object):
     def __init__(
             self, min_width=0, min_height=0, flex_width=True, flex_height=True,
-            background=None):
+            background=None, get_hidden=None):
         self.pane = DUMMY_PANE
-        self.min_width = min_width
-        self.min_height = min_height
-        self.flex_width = flex_width
-        self.flex_height = flex_height
+        self._min_width = min_width
+        self._min_height = min_height
+        self._flex_width = flex_width
+        self._flex_height = flex_height
         self.background = background
+        self.get_hidden = get_hidden
 
     def __str__(self):
-        return '{}[{}]'.format(self.__class__.__name__, self.pane)
+        return '{}[{}]{}'.format(
+            self.__class__.__name__,
+            self.pane,
+            '[hidden]' if self.hidden else '')
+
+    @property
+    def hidden(self):
+        return self.get_hidden is not None and self.get_hidden()
+
+    @property
+    def min_width(self):
+        return 0 if self.hidden else self._min_width
 
     def set_min_width(self, value):
-        self.min_width = value
+        self._min_width = value
         self._update_dims()
         return self
+
+    @property
+    def min_height(self):
+        return 0 if self.hidden else self._min_height
 
     def set_min_height(self, value):
-        self.min_height = value
+        self._min_height = value
         self._update_dims()
         return self
+
+    @property
+    def flex_width(self):
+        return not self.hidden and self._flex_width
 
     def set_flex_width(self, value: bool):
-        self.flex_width = value
+        self._flex_width = value
         self._update_dims()
         return self
 
+    @property
+    def flex_height(self):
+        return not self.hidden and self._flex_height
+
     def set_flex_height(self, value: bool):
-        self.flex_height = value
+        self._flex_height = value
         self._update_dims()
         return self
 
@@ -209,6 +239,9 @@ class RootLayout(object):
         self._child = value
         self._child.attach(self.child_pane)
 
+    def update_layout(self):
+        self.child_pane.update_layout()
+
     def on_draw(self):
         self.child_pane.dispatch_event('on_draw')
 
@@ -243,15 +276,46 @@ class Orientation(enum.Enum):
 
 
 class StackLayout(View):
-    def __init__(self, orientation: Orientation, *children, **kwargs):
+    def __init__(self, orientation: Orientation, *children, min_width=None,
+                 min_height=None,
+                 flex_width=None, flex_height=None, **kwargs):
+        # We need to know which of min_ and flex_ are set explicitly by the user
+        if min_width is not None:
+            kwargs['min_width'] = min_width
+        if min_height is not None:
+            kwargs['min_height'] = min_height
+        if flex_width is not None:
+            kwargs['flex_width'] = flex_width
+        if flex_height is not None:
+            kwargs['flex_height'] = flex_height
         super().__init__(**kwargs)
+
         self.orientation = orientation
         self.children = []
         self.mouseover_pane = None
         self._dragging_pane = None
         self._dragging_button = 0
+        min_dim = 0
+        flex = False
         for child in children:
             self._add_child_noresize(child)
+            if self.orientation == Orientation.HORIZONTAL:
+                min_dim += child.min_width
+                flex = flex or child.flex_width
+            else:
+                min_dim += child.min_height
+                flex = flex or child.flex_height
+
+        if self.orientation == Orientation.HORIZONTAL:
+            if min_width is None:
+                self.set_min_width(min_dim)
+            if flex_width is None:
+                self.set_flex_width(flex)
+        else:
+            if min_height is None:
+                self.set_min_height(min_dim)
+            if flex_width is None:
+                self.set_flex_height(flex)
 
     def __str__(self):
         content = ''
@@ -364,9 +428,6 @@ class StackLayout(View):
         count_flex = sum(flexes)
         min_dim = sum(min_dims)
         extra_dim = (dim - min_dim) / max(count_flex, 1)
-
-        if self.orientation == Orientation.VERTICAL:
-            print(min_dims, flexes)
 
         for child, min_dim, flex in zip(self.children, min_dims, flexes):
             pane = child.pane
