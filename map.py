@@ -4,6 +4,7 @@ from pyglet.window import key, mouse
 from pyglet import gl
 import time
 
+import colors
 import ui
 
 
@@ -217,19 +218,38 @@ class Map(ui.View):
             clamp_x0, clamp_y0,
             width=(clamp_x1 - clamp_x0), height=(clamp_y1 - clamp_y0))
 
+        # print(token.character, self.state.current_char)
+
+        if token.is_character and  token.character is self.state.current_char:
+            borders = []
+            if clamp_x0 == x0:
+                borders.extend((clamp_x0, clamp_y0, clamp_x0, clamp_y1))
+            if clamp_y0 == y0:
+                borders.extend((clamp_x0, clamp_y0, clamp_x1, clamp_y0))
+            if clamp_x1 == x1:
+                borders.extend((clamp_x1, clamp_y0, clamp_x1, clamp_y1))
+            if clamp_y1 == y1:
+                borders.extend((clamp_x0, clamp_y1, clamp_x1, clamp_y1))
+            c = colors.CYAN_100 * (len(borders) // 2)
+            gl.glLineWidth(2)
+            pyglet.graphics.draw(len(borders) // 2, gl.GL_LINES,
+                ('v2f', borders),
+                ('c3B', c)
+            )
+
     def on_draw(self):
         assert self.pane.width > 0
         self._update_pan()
         # Draw non-player tokens
         for token in self.state.current_page.tokens:
-            if token.player is None:
+            if not token.is_character:
                 self._draw_token(token)
         self._draw_veils()
         if self._show_grid:
             self._draw_grid()
         # Draw player tokens
         for token in self.state.current_page.tokens:
-            if token.player is not None:
+            if token.is_character:
                 self._draw_token(token)
 
         return True

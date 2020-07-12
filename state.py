@@ -30,7 +30,7 @@ class State(pyglet.event.EventDispatcher):
         return self.player is None
 
     @property
-    def current_char(self):
+    def current_char(self) -> str:
         return self._current_char
 
     @current_char.setter
@@ -38,10 +38,10 @@ class State(pyglet.event.EventDispatcher):
         self._current_char = value
         self.dispatch_event('on_current_char_changed')
 
-    def no_selected_char(self):
+    def no_selected_char(self) -> bool:
         return self._current_char is None
 
-    def get_current_char(self):
+    def get_current_char(self) -> str:
         return self._current_char
 
     def get_current_char_name(self):

@@ -24,11 +24,11 @@ class HealthBarImpl(ui.View):
         x1 = x0 + green_width
         x2 = self.pane.x1 - self._padding
         triangles = [
-            x0, self.pane.y0, x1, self.pane.y0, x1, self.pane.y1, x0,
-            self.pane.y0, x1, self.pane.y1, x0, self.pane.y1, x1, self.pane.y0,
-            x2, self.pane.y0, x2, self.pane.y1, x1, self.pane.y0, x2,
-            self.pane.y1, x1, self.pane.y1
-        ]
+            x0, self.pane.y0, x1, self.pane.y0, x1, self.pane.y1,
+            x0, self.pane.y0, x1, self.pane.y1, x0, self.pane.y1,
+            x1, self.pane.y0, x2, self.pane.y0, x2, self.pane.y1,
+            x1, self.pane.y0, x2, self.pane.y1, x1, self.pane.y1
+        ]  # yapf: disable
         pyglet.graphics.draw(12, gl.GL_TRIANGLES, ('v2f', triangles),
                              ('c3B', self._colors))
 

@@ -72,9 +72,9 @@ class Pane(event.EventDispatcher):
         if self._background is None:
             return
         self._triangles = [
-            self.x0, self.y0, self.x1, self.y0, self.x1, self.y1, self.x0,
-            self.y0, self.x1, self.y1, self.x0, self.y1
-        ]
+            self.x0, self.y0, self.x1, self.y0, self.x1, self.y1,
+            self.x0, self.y0, self.x1, self.y1, self.x0, self.y1
+        ]  # yapf: disable
         self._colors = self._background * 6
 
     def _draw_background(self):
@@ -341,14 +341,10 @@ class StackLayout(View):
             pane.push_handlers(self.on_content_resize)
 
     def detach(self):
-        super().deattach()
+        super().detach()
         for child in self.children:
             child.pane.remove_handlers(self)
             child.detach()
-
-    def add_child(self, child: View):
-        self._add_child_noresize(child)
-        self._resize()
 
     def _find_child_pane(self, x, y) -> Pane:
         """Returns the child contining (x, y) or None."""
@@ -505,7 +501,7 @@ class LayersLayout(View):
             pane.push_handlers(self.on_content_resize)
 
     def detach(self):
-        super().deattach()
+        super().detach()
         for child in self.children:
             child.pane.remove_handlers(self)
             child.detach()
