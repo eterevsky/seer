@@ -13,7 +13,8 @@ class Pane(event.EventDispatcher):
     This class dispatches mouse events related to the controlled area and draws
     its background.
     """
-    def __init__(self, x0, y0, x1, y1, background=None):
+    def __init__(self, window, x0, y0, x1, y1, background=None):
+        self.window = window
         self.x0, self.y0 = x0, y0
         self.x1, self.y1 = x1, y1
         self.min_width = 0
@@ -123,7 +124,7 @@ Pane.register_event_type('on_dims_change')
 Pane.register_event_type('on_resize')
 Pane.register_event_type('on_content_resize')
 
-DUMMY_PANE = Pane(0, 0, 0, 0)
+DUMMY_PANE = Pane(None, 0, 0, 0, 0)
 
 
 class View(object):
@@ -221,11 +222,14 @@ class View(object):
         self.pane.change_content_dims(self.min_width, self.min_height,
                                       self.flex_width, self.flex_height)
 
+    def on_mouse_enter(self, *args):
+        self.pane.window.set_mouse_cursor(None)
+
 
 class RootLayout(object):
     def __init__(self, window: pyglet.window.Window, child: View = None,
                  background=None):
-        self.child_pane = Pane(0, 0, window.width, window.height,
+        self.child_pane = Pane(window, 0, 0, window.width, window.height,
                                background=background)
         self._child = child
         if child is not None:
@@ -336,9 +340,9 @@ class StackLayout(View):
         else:
             x1 = x0
         for child in self.children:
-            pane = Pane(x0, y0, x1, y1)
-            child.attach(pane)
-            pane.push_handlers(self.on_content_resize)
+            child_pane = Pane(pane.window, x0, y0, x1, y1)
+            child.attach(child_pane)
+            child_pane.push_handlers(self.on_content_resize)
 
     def detach(self):
         super().detach()
@@ -496,8 +500,8 @@ class LayersLayout(View):
         super().attach(pane)
         x0, y0, x1, y1 = self.pane.x0, self.pane.y0, self.pane.x1, self.pane.y1
         for child in self.children:
-            pane = Pane(x0, y0, x1, y1)
-            child.attach(pane)
+            child_pane = Pane(pane.window, x0, y0, x1, y1)
+            child.attach(child_pane)
             pane.push_handlers(self.on_content_resize)
 
     def detach(self):
@@ -593,6 +597,11 @@ class TextInput(View):
                                              color=self.text_color[:3])
         self.caret.visible = False
         self.focus_manager.add_input(self)
+
+    def on_mouse_enter(self, *args):
+        self.pane.window.set_mouse_cursor(
+            self.pane.window.get_system_mouse_cursor(
+                pyglet.window.Window.CURSOR_TEXT))
 
     def on_resize(self, width, height, offset_x, offset_y):
         if width <= 0 or height <= 0:
@@ -701,7 +710,6 @@ class FocusManager(object):
         self._inputs = []
         self._focus = None
         self._text_cursor = window.get_system_mouse_cursor('text')
-        print(self._text_cursor)
 
     def add_input(self, controller):
         self._inputs.append(controller)
@@ -723,11 +731,6 @@ class FocusManager(object):
         if target is not None:
             self._focus.caret.visible = True
             return target.caret.on_mouse_press(x, y, button, modifiers)
-
-    def on_mouse_motion(self, x, y, dx, dy):
-        target = self._find_input(x, y)
-        self.window.set_mouse_cursor(
-            None if target is None else self._text_cursor)
 
     def on_mouse_drag(self, x, y, dx, dy, buttons, modifiers):
         if self._focus:

@@ -218,8 +218,6 @@ class Map(ui.View):
             clamp_x0, clamp_y0,
             width=(clamp_x1 - clamp_x0), height=(clamp_y1 - clamp_y0))
 
-        # print(token.character, self.state.current_char)
-
         if token.is_character and  token.character is self.state.current_char:
             borders = []
             if clamp_x0 == x0:
@@ -283,6 +281,16 @@ class Map(ui.View):
                 self.state.current_char = token.character
             else:
                 self.state.current_char = None
+
+    def on_mouse_motion(self, screen_x, screen_y, dx, dy):
+        x, y = self.screen_to_map(screen_x, screen_y)
+        token = self.state.current_page.find_token(x, y)
+        if token is not None and token.controlled_by(self.state.player):
+            self.pane.window.set_mouse_cursor(
+                self.pane.window.get_system_mouse_cursor(
+                    pyglet.window.Window.CURSOR_HAND))
+        else:
+            self.pane.window.set_mouse_cursor(None)
 
     def on_mouse_drag(self, screen_x, screen_y, dx, dy, buttons, modifiers):
         if self.state.dragged_token is None: return
