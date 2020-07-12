@@ -12,6 +12,7 @@ import time
 import apiserver
 from campaign import Campaign
 import chat
+import colors
 import healthbar
 from map import Map
 import resserver
@@ -81,7 +82,7 @@ class Manager(object):
                             flex_width=False),
             ).set_min_height(70).set_flex_height(False),
             ui.Spacer(min_height=15, flex_height=False),
-            healthbar.HealthBar(get_char=state.get_current_char),
+            healthbar.HealthBar(self.focus_manager, get_char=state.get_current_char),
             flex_height=False,
             get_hidden=state.no_selected_char)
         self.layout = ui.RootLayout(self.window, ui.HStackLayout(
@@ -91,7 +92,7 @@ class Manager(object):
                 chat.ChatInput(
                     self.state, self.api_server, self.focus_manager,
                     min_height=100, flex_height=False)
-            ).set_background((40, 40, 40))
+            ).set_background(colors.GREY_900)
              .set_min_width(300)
              .set_flex_width(False),
             self.map

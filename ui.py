@@ -211,6 +211,7 @@ class View(object):
         self.pane.remove_handlers(self)
         self.pane = pane
         self.pane.push_handlers(self)
+        self.pane.push_handlers(on_draw=self.on_draw_check_hidden)
         self.pane.background = self.background
         self._update_dims()
 
@@ -224,6 +225,11 @@ class View(object):
 
     def on_mouse_enter(self, *args):
         self.pane.window.set_mouse_cursor(None)
+
+    @event.priority(1)
+    def on_draw_check_hidden(self):
+        if self.hidden:
+            return event.EVENT_HANDLED
 
 
 class RootLayout(object):
@@ -576,20 +582,27 @@ class Spacer(View):
 
 class TextInput(View):
     def __init__(self, focus_manager, text_color=(192, 192, 192, 255),
-                 **kwargs):
+                 form_background=None, font_size=None,
+                 multiline=True, **kwargs):
         super().__init__(**kwargs)
         self.document = pyglet.text.document.UnformattedDocument('')
-        self.document.set_style(0, 0, {'color': text_color})
+        self.document.set_style(0, 0, {
+            'color': text_color,
+            'font_size': font_size
+        })
         self.layout = None
         self.caret = None
+        self.multiline = multiline
         self.focus_manager = focus_manager
         self.text_color = text_color
+        self.form_background = form_background
 
     def attach(self, pane):
         # TODO: Override detach.
         super().attach(pane)
         self.layout = pyglet.text.layout.IncrementalTextLayout(
-            self.document, pane.width - 10, pane.height - 10, multiline=True,
+            self.document, pane.width - 10, pane.height - 10,
+            multiline=self.multiline,
             wrap_lines=True)
         self.layout.x = pane.x0 + 5
         self.layout.y = pane.y0 + 5
@@ -613,11 +626,23 @@ class TextInput(View):
         self.layout.y = offset_y + 5
 
     def on_draw(self):
+        x0 = self.pane.x0 + 2.5
+        y0 = self.pane.y0 + 2.5
+        x1 = self.pane.x1 - 2.5
+        y1 = self.pane.y1 - 2.5
+        if self.form_background is not None:
+            triangles = [
+                x0, y0, x1, y0, x1, y1,
+                x0, y0, x1, y1, x0, y1
+            ]  # yapf: disable
+            c = self.form_background * 6
+
+            pyglet.graphics.draw(6, pyglet.gl.GL_TRIANGLES,
+                                ('v2f', triangles), ('c3B', c))
+
         lines = [
-            self.pane.x0 + 2.5, self.pane.y0 + 2.5,
-            self.pane.x1 - 2.5, self.pane.y0 + 2.5,
-            self.pane.x1 - 2.5, self.pane.y1 - 2.5,
-            self.pane.x0 + 2.5, self.pane.y1 - 2.5
+            x0, y0, x1, y0,
+            x1, y1, x0, y1
         ]  # yapf: disable
         if self.pane.mouseover:
             colors = [192, 192, 192] * (len(lines) // 2)
@@ -632,6 +657,7 @@ class TextInput(View):
         self.layout.draw()
 
     def on_return(self):
+        # Has to be overriden by the class to handle the input text.
         pass
 
 

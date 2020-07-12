@@ -1,6 +1,7 @@
 import pyglet
 from pyglet import gl
 
+import colors
 import ui
 
 RED = (0xb7, 0x1c, 0x1c)
@@ -38,7 +39,7 @@ class HealthText(ui.Text):
                  **kwargs):
         self.get_char = get_char
         super().__init__(get_text=self.health_text, font_size=font_size,
-                         valign=valign, align=align, multiline=True, **kwargs)
+                         valign=valign, align=align, multiline=False, **kwargs)
 
     def health_text(self):
         char = self.get_char()
@@ -50,7 +51,7 @@ class HealthText(ui.Text):
 
 
 class HealthBar(ui.VStackLayout):
-    def __init__(self, get_char, padding=8, **kwargs):
+    def __init__(self, focus_manager, get_char, padding=8, **kwargs):
         super().__init__(
             ui.Text(text='HIT POINTS', font_size=8, kerning=2, min_height=14,
                     align='center', color=(255, 255, 255, 255), padding=0,
@@ -58,5 +59,15 @@ class HealthBar(ui.VStackLayout):
             ui.LayersLayout(
                 HealthBarImpl(get_char, padding=padding,
                               min_height=30, flex_height=False),
-                HealthText(get_char)), min_height=50, flex_height=False,
-            **kwargs)
+                ui.HStackLayout(
+                    ui.Spacer(),
+                    ui.TextInput(focus_manager, min_width=40, font_size=20, flex_width=0,
+                                 form_background=colors.GREY_900,
+                                 get_hidden=lambda: True),
+                    HealthText(get_char),
+                    ui.TextInput(focus_manager, min_width=40, font_size=20, flex_width=0,
+                                 form_background=colors.GREY_900,
+                                 get_hidden=lambda: True),
+                    ui.Spacer()
+                )
+            ), min_height=50, flex_height=False, **kwargs)
