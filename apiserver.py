@@ -4,7 +4,7 @@ import socket
 import socketserver
 import threading
 
-import event
+from ui import event
 
 PORT = 2214
 CLIENT_PORT = 2216
