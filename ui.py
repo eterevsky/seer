@@ -220,6 +220,7 @@ class View(object):
         self.pane = DUMMY_PANE
 
     def _update_dims(self):
+        print(self, '_update_dims', self.min_width)
         self.pane.change_content_dims(self.min_width, self.min_height,
                                       self.flex_width, self.flex_height)
 
@@ -426,9 +427,14 @@ class StackLayout(View):
         self._resize()
 
     def on_content_resize(self):
-        self._resize()
+        print(self, 'on_content_resize')
+        self._resize(debug=True)
 
-    def _resize(self):
+    def _resize(self, debug=False):
+        if debug:
+            for c in self.children:
+                print(c.min_width)
+
         if self.orientation == Orientation.HORIZONTAL:
             dim = self.pane.width
             min_dims = [child.pane.min_width for child in self.children]
@@ -445,6 +451,12 @@ class StackLayout(View):
         count_flex = sum(flexes)
         min_dim = sum(min_dims)
         extra_dim = (dim - min_dim) / max(count_flex, 1)
+
+        if debug:
+            print('min_dims', min_dims)
+            print('flexes', flexes)
+            for c in self.children:
+                print(c.min_width)
 
         for child, min_dim, flex in zip(self.children, min_dims, flexes):
             pane = child.pane
@@ -597,13 +609,16 @@ class TextInput(View):
         self.text_color = text_color
         self.form_background = form_background
 
+    def focus(self):
+        self.focus_manager.focus(self)
+
     def attach(self, pane):
         # TODO: Override detach.
         super().attach(pane)
         self.layout = pyglet.text.layout.IncrementalTextLayout(
             self.document, pane.width - 10, pane.height - 10,
             multiline=self.multiline,
-            wrap_lines=True)
+            wrap_lines=self.multiline)
         self.layout.x = pane.x0 + 5
         self.layout.y = pane.y0 + 5
         self.caret = pyglet.text.caret.Caret(self.layout,
@@ -682,22 +697,23 @@ class Text(View):
         self.valign = valign
 
     def _create_layout(self, width, height, offset_x, offset_y):
-        self.layout = pyglet.text.layout.IncrementalTextLayout(
-            self.document, width - 2 * self.padding, height - 2 * self.padding,
-            multiline=self.multiline, wrap_lines=True)
+        width -= 2 * self.padding
+        if width <= 0: width = None
+        self.layout = pyglet.text.layout.TextLayout(
+            self.document, width, height - 2 * self.padding,
+            multiline=self.multiline, wrap_lines=self.multiline)
         self.layout.content_valign = self.valign
         self.layout.x = offset_x + self.padding
         self.layout.y = offset_y + self.padding
+        if not self.min_width_set() and not self.multiline:
+            self.set_min_width(self.layout.content_width + 2 * self.padding)
 
     def attach(self, pane):
         super().attach(pane)
-        if pane.width > 0:
+        if pane.width > 0 or not self.multiline:
             self._create_layout(pane.width, pane.height, pane.x0, pane.y0)
 
     def on_resize(self, width, height, offset_x, offset_y):
-        if width <= 0:
-            self.layout = None
-            return
         if self.layout is None:
             self._create_layout(width, height, offset_x, offset_y)
             return
@@ -711,6 +727,18 @@ class Text(View):
         if self.get_text is not None:
             self.document.text = self.get_text()
         self.layout.draw()
+
+    def set_content_width(self):
+        print('document.text', self.document.text)
+        print('self.layout.content_width', self.layout.content_width)
+        self.layout.begin_update()
+        if self.get_text is not None:
+            self.document.text = self.get_text()
+        self.layout.end_update()
+        self.layout._update()
+        print('document.text', self.document.text)
+        print('self.layout.content_width', self.layout.content_width)
+        self.set_min_width(self.layout.content_width)
 
 
 class Image(View):
@@ -739,6 +767,9 @@ class FocusManager(object):
 
     def add_input(self, controller):
         self._inputs.append(controller)
+
+    def focus(self, input):
+        self._focus = input
 
     def _find_input(self, x, y):
         if self._focus is not None and self._focus.pane.contains(x, y):
