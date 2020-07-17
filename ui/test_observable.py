@@ -20,9 +20,13 @@ class ObservableTest(unittest.TestCase):
 
     def test_remove(self):
         called = 0
+
+        # Remove doesn't work well with mocks, since they aren't detected as
+        # equal.
         def observer(v):
             nonlocal called
             called += 1
+
         v = Observable(1)
         v.observe(observer)
         v.set(2)
@@ -78,12 +82,9 @@ class AttributeTest(unittest.TestCase):
         self.assertEqual(a.x, 0)
         a.x = 1
         self.assertEqual(a.x, 1)
+        callback.assert_called_once_with(1)
 
-        a.x_.observe(callback)
-        a.x = 2
-        callback.assert_called_once_with(2)
-
-    def test_ext_observable(self):
+    def test_make_observable(self):
         class A(object):
             x = Attribute('x_')
             def __init__(self, value):
