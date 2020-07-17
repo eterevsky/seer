@@ -1,7 +1,7 @@
 import unittest
 from unittest.mock import Mock
 
-from .observable import Observable
+from .observable import Attribute, Observable, make_observable
 
 
 class ObservableTest(unittest.TestCase):
@@ -31,6 +31,73 @@ class ObservableTest(unittest.TestCase):
         v.set(3)
         self.assertEqual(called, 1)
 
+
+class AttributeTest(unittest.TestCase):
+    def test_get_set_observe(self):
+        class A(object):
+            x = Attribute('x_')
+            def __init__(self):
+                self.x_ = Observable(0)
+
+        a = A()
+        self.assertEqual(a.x, 0)
+        a.x = 1
+        self.assertEqual(a.x, 1)
+
+        callback = Mock()
+        a.x_.observe(callback)
+        a.x = 2
+        callback.assert_called_once_with(2)
+
+    def test_init_none(self):
+        class A(object):
+            x = Attribute('x_')
+
+        a = A()
+        self.assertEqual(a.x, None)
+        a.x = 1
+        self.assertEqual(a.x, 1)
+
+        callback = Mock()
+        a.x_.observe(callback)
+        a.x = 2
+        callback.assert_called_once_with(2)
+
+    def test_ext_observable(self):
+        class A(object):
+            x = Attribute('x_')
+            def __init__(self, value):
+                self.x_ = make_observable(value)
+
+        v = Observable(0)
+        callback = Mock()
+        v.observe(callback)
+
+        a = A(v)
+        callback.assert_not_called()
+        self.assertEqual(a.x, 0)
+        a.x = 1
+        self.assertEqual(a.x, 1)
+
+        a.x_.observe(callback)
+        a.x = 2
+        callback.assert_called_once_with(2)
+
+    def test_ext_observable(self):
+        class A(object):
+            x = Attribute('x_')
+            def __init__(self, value):
+                self.x_ = make_observable(value)
+
+        a = A(0)
+        self.assertEqual(a.x, 0)
+        a.x = 1
+        self.assertEqual(a.x, 1)
+
+        callback = Mock()
+        a.x_.observe(callback)
+        a.x = 2
+        callback.assert_called_once_with(2)
 
 
 if __name__ == '__main__':

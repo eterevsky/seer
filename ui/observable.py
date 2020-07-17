@@ -1,7 +1,9 @@
-from typing import Any, Callable, List, Union
+from typing import Any, Callable, Generic, List, Optional, TypeVar, Union
 
 
-class Observable(object):
+T = TypeVar('T')
+
+class Observable(Generic[T]):
     """An observable value.
 
     A object of this class holds a single value. Any number of listeners can be
@@ -19,16 +21,16 @@ class Observable(object):
 
     `o.remove_observer(callback_or_object)` unregisters observer(s)
     """
-    def __init__(self, value: Any = None):
+    def __init__(self, value: T = None):
         """Initializes the observable value.
 
         Args:
             value: initial value or None by default.
         """
-        self.value: Any = value
-        self._observers: List[Callable] = []
+        self.value: Optional[T] = value
+        self._observers: List[Callable[[T], None]] = []
 
-    def set(self, value: Any):
+    def set(self, value: T):
         """Updates the value and calls the observers.
 
         The observers *will not be called* if the new value is equal to
@@ -39,7 +41,7 @@ class Observable(object):
             for observer in self._observers:
                 observer(self.value)
 
-    def observe(self, observer: Callable):
+    def observe(self, observer: Callable[[T], None]):
         """Registers an observer callback.
 
         The callback is added to the end of the queue of observers. When the
@@ -51,7 +53,7 @@ class Observable(object):
         """Unregisers observer callbacks(s).
 
         Args:
-            `observer`: If it is a function, it will be removed from the list of
+            observer: If it is a function, it will be removed from the list of
               observers directly. If it's an object, any observers that are
               methods of this class will be removed.
         """
@@ -62,3 +64,55 @@ class Observable(object):
                 del self._observers[i]
             else:
                 i += 1
+
+
+def make_observable(x: Union[T, Observable[T]]) -> Observable[T]:
+    """Wrap a value in Observable if it is not Observable.
+
+    When the passed value is already an Observable, return it unchanged.
+    """
+    return x if isinstance(x, Observable) else Observable(x)
+
+
+class Attribute(Generic[T]):
+    """Defines observable class attributes.
+
+    Used as follows:
+
+        class A(object):
+            field = Attribute('field_')
+
+            def __init__(self):
+                # Optional. By default will be initialized with
+                # Observable(None).
+                self.field_ = Observable(0)
+
+        a = A()
+        a.field = 100   # sets the value
+        print(a.field)  # reads the value
+        a.field_.observe(handler)  # adds an observer
+        a.field = 200  # will trigger handler
+    """
+
+    def __init__(self, observable_name: str):
+        """Constructs observable attribute.
+
+        Args:
+            observable_name: the name of the field, that contains the underlying
+              observable value. It's recommended that it is the name of the
+              attribute with appended `_`.
+        """
+        self.name = observable_name
+
+    def _get_observable(self, instance) -> Observable[T]:
+        observable = getattr(instance, self.name, None)
+        if observable is None:
+            observable = Observable()
+            setattr(instance, self.name, observable)
+        return observable
+
+    def __set__(self, instance, value: T):
+        self._get_observable(instance).set(value)
+
+    def __get__(self, instance, owner=None) -> T:
+        return self._get_observable(instance).value
