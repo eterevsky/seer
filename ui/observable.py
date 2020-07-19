@@ -1,7 +1,7 @@
 from typing import Any, Callable, Generic, List, Optional, TypeVar, Union
 
-
 T = TypeVar('T')
+
 
 class Observable(Generic[T]):
     """An observable value.
@@ -93,7 +93,6 @@ class Attribute(Generic[T]):
         a.field_.observe(handler)  # adds an observer
         a.field = 200  # will trigger handler
     """
-
     def __init__(self, observable_name: str):
         """Constructs observable attribute.
 

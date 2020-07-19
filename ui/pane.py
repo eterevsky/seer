@@ -86,8 +86,5 @@ Pane.register_event_type('on_mouse_press')
 Pane.register_event_type('on_mouse_motion')
 Pane.register_event_type('on_mouse_release')
 Pane.register_event_type('on_mouse_scroll')
-Pane.register_event_type('on_dims_change')
-Pane.register_event_type('on_resize')
-Pane.register_event_type('on_content_resize')
 
 DUMMY_PANE = Pane(None, 0, 0, 0, 0)

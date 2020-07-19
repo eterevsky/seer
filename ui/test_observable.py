@@ -54,6 +54,7 @@ class AttributeTest(unittest.TestCase):
         callback.assert_called_once_with(2)
 
     def test_init_none(self):
+        # pylint: disable=no-member
         class A(object):
             x = Attribute('x_')
 
