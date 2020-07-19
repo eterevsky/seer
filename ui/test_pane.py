@@ -1,4 +1,4 @@
-import pyglet.graphics
+import pyglet.shapes
 import unittest
 from unittest.mock import Mock, patch
 
@@ -7,29 +7,29 @@ from .pane import Pane
 
 
 class PaneTest(unittest.TestCase):
-    @patch('pyglet.graphics.draw')
-    def test_with_background(self, mock_draw):
-        pane = Pane(0, 0, 100, 100, background=(127, 127, 127))
-        pane.dispatch_event('on_draw')
-        mock_draw.assert_called_once_with(6, pyglet.gl.GL_TRIANGLES, ('v2f', [
-            0, 0, 100, 0, 100, 100, 0, 0, 100, 100, 0, 100
-        ]), ('c3B', (127, ) * 18))
-
-    @patch('pyglet.graphics.draw')
-    def test_no_background(self, mock_draw):
+    def test_no_background(self):
         pane = Pane(0, 0, 100, 100)
-        pane.dispatch_event('on_draw')
-        mock_draw.assert_not_called()
+        self.assertEqual(pane._background_shape, None)
 
-    @patch('pyglet.graphics.draw')
-    def test_update_background(self, mock_draw):
+    def test_with_background(self):
+        pane = Pane(0, 0, 100, 100, background=(127, 127, 127))
+        self.assertTrue(isinstance(pane._background_shape, pyglet.shapes.Rectangle))
+        self.assertEqual(pane._background_shape.x, 0)
+        self.assertEqual(pane._background_shape.y, 0)
+        self.assertEqual(pane._background_shape.width, 100)
+        self.assertEqual(pane._background_shape.height, 100)
+        self.assertEqual(pane._background_shape.color, (127, 127, 127))
+
+    def test_update_background(self):
         pane = Pane(0, 0, 100, 100, background=(127, 127, 127))
         pane.coords = (100, 100, 200, 200)
         pane.background_color = (255, 255, 255)
-        pane.dispatch_event('on_draw')
-        mock_draw.assert_called_once_with(6, pyglet.gl.GL_TRIANGLES, ('v2f', [
-            100, 100, 200, 100, 200, 200, 100, 100, 200, 200, 100, 200
-        ]), ('c3B', (255, ) * 18))
+        self.assertTrue(isinstance(pane._background_shape, pyglet.shapes.Rectangle))
+        self.assertEqual(pane._background_shape.x, 100)
+        self.assertEqual(pane._background_shape.y, 100)
+        self.assertEqual(pane._background_shape.width, 100)
+        self.assertEqual(pane._background_shape.height, 100)
+        self.assertEqual(pane._background_shape.color, (255, 255, 255))
 
 
 if __name__ == '__main__':

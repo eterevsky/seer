@@ -19,8 +19,7 @@ class Pane(event.EventDispatcher):
     mouseover: Attribute[bool] = Attribute('mouseover_')
 
     def __init__(self, x0: float, y0: float, x1: float, y1: float,
-                 background: Union[Observable, Tuple[int, int,
-                                                           int]] = None):
+                 background: Union[Observable, Tuple[int, int, int]] = None):
         self.coords_: Observable[(float, float, float, float)] = Observable(
             (x0, y0, x1, y1))
         self.coords_.observe(self._prepare_background_draw)
@@ -44,20 +43,17 @@ class Pane(event.EventDispatcher):
 
     def _prepare_background_draw(self, *args):
         if self.background_color is None:
+            self._background_shape = None
             return
         x0, y0, x1, y1 = self.coords
-        self._triangles = [
-            x0, y0, x1, y0, x1, y1,
-            x0, y0, x1, y1, x0, y1
-        ]  # yapf: disable
-        self._colors = self.background_color * 6
+        self._background_shape = pyglet.shapes.Rectangle(
+            x=x0, y=y0, width=(x1 - x0), height=(y1 - y0),
+            color=self.background_color)
 
     def _draw_background(self):
-        if self.background_color is None:
+        if self._background_shape is None:
             return
-
-        pyglet.graphics.draw(6, pyglet.gl.GL_TRIANGLES,
-                             ('v2f', self._triangles), ('c3B', self._colors))
+        self._background_shape.draw()
 
     @event.priority(1)
     def on_draw(self):
@@ -87,4 +83,4 @@ Pane.register_event_type('on_mouse_motion')
 Pane.register_event_type('on_mouse_release')
 Pane.register_event_type('on_mouse_scroll')
 
-DUMMY_PANE = Pane(None, 0, 0, 0, 0)
+DUMMY_PANE = Pane(0, 0, 0, 0)
