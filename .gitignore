@@ -132,3 +132,4 @@ dmypy.json
 campaign/data-*T*.json
 campaign/backups/*.json
 falafel
+.vscode
