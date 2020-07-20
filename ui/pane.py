@@ -1,5 +1,4 @@
-import pyglet
-from pyglet import gl
+import pyglet.shapes
 from typing import Optional, Tuple, Union
 
 from . import event
@@ -11,19 +10,36 @@ class Pane(event.EventDispatcher):
 
     This class dispatches mouse events related to the controlled area and draws
     its background.
+
+    The class has 3 observable attributes:
+
+    coords: a tuple the coordinates of bottom left and top right corners, can
+      be set by the external code (usually a Layout class)
+    background_color: background color represented by a tuple R, G, B of
+      integers in the range 0 <= X < 256.
+    mouse_pos: position of the mouse cursor when mouse is over the pane, None
+      otherwise
+
     """
 
     coords: Attribute[Tuple[float, float, float, float]] = Attribute('coords_')
     background_color: Attribute[Tuple[int, int,
                                       int]] = Attribute('background_color_')
-    mouseover: Attribute[bool] = Attribute('mouseover_')
+    mouse_pos: Attribute[Optional[Tuple[float,
+                                        float]]] = Attribute('mouse_pos_')
 
     def __init__(self, x0: float, y0: float, x1: float, y1: float,
+                 parent_mouse_pos_: Observable[Optional[Tuple[float, float]]],
                  background: Union[Observable, Tuple[int, int, int]] = None):
         self.coords_: Observable[(float, float, float, float)] = Observable(
             (x0, y0, x1, y1))
-        self.coords_.observe(self._prepare_background_draw)
-        self.mouseover_: Observable[bool] = Observable(False)
+        self.coords_.observe(self._on_coords_change)
+        self.mouse_pos_: Observable[Optional[Tuple[float,
+                                                   float]]] = Observable(None)
+        self.parent_mouse_pos_ = parent_mouse_pos_
+        self.parent_mouse_pos_.observe(self._update_mouse_pos)
+        self._update_mouse_pos(self.parent_mouse_pos_.value)
+
         self.background_color_: Observable[Optional(Tuple(
             int, int, int))] = make_observable(background)
         self.background_color_.observe(self._prepare_background_draw)
@@ -40,6 +56,17 @@ class Pane(event.EventDispatcher):
     @property
     def height(self):
         return self.coords[3] - self.coords[1]
+
+    def _update_mouse_pos(self, parent_mouse_pos):
+        if parent_mouse_pos is None:
+            self.mouse_pos = None
+            return
+        x, y = parent_mouse_pos
+        self.mouse_pos = (x, y) if self.contains(x, y) else None
+
+    def _on_coords_change(self, coords):
+        self._prepare_background_draw()
+        self._update_mouse_pos(self.parent_mouse_pos_.value)
 
     def _prepare_background_draw(self, *args):
         if self.background_color is None:
@@ -59,16 +86,6 @@ class Pane(event.EventDispatcher):
     def on_draw(self):
         self._draw_background()
 
-    @event.priority(1)
-    def on_mouse_enter(self, *args):
-        # TODO: This might not work if the mouse is over the pane when it is
-        # created or resized...
-        self.mouseover = True
-
-    @event.priority(1)
-    def on_mouse_leave(self, *args):
-        self.mouseover = False
-
     def contains(self, x, y):
         x0, y0, x1, y1 = self.coords
         return x0 <= x < x1 and y0 <= y < y1
@@ -76,11 +93,8 @@ class Pane(event.EventDispatcher):
 
 Pane.register_event_type('on_draw')
 Pane.register_event_type('on_mouse_drag')
-Pane.register_event_type('on_mouse_enter')
-Pane.register_event_type('on_mouse_leave')
 Pane.register_event_type('on_mouse_press')
-Pane.register_event_type('on_mouse_motion')
 Pane.register_event_type('on_mouse_release')
 Pane.register_event_type('on_mouse_scroll')
 
-DUMMY_PANE = Pane(0, 0, 0, 0)
+DUMMY_PANE = Pane(0, 0, 0, 0, Observable(None))
