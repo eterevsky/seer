@@ -1,107 +1,128 @@
+from typing import Optional, Tuple
+
 from .pane import Pane, DUMMY_PANE
 from ui import event
+from .observable import Attribute, MaybeObservable, Observable, make_observable
+
 
 class View(object):
-    def __init__(self, min_width=None, min_height=None, flex_width=None,
-                 flex_height=None, background=None, get_hidden=None):
-        self.pane = DUMMY_PANE
-        self._min_width = min_width
-        self._min_height = min_height
-        self._flex_width = flex_width
-        self._flex_height = flex_height
-        self.background = background
-        self.get_hidden = get_hidden
+    """A class that renders a UI element in a given pane.
+
+    This is an abstract class that can be implemented by all the UI widgets. It
+    manages the attributes that determine the size of the pane that will be
+    created by the parent layout view.
+
+    Attributes:
+      min_width, min_height: set by the external code that creates the View,
+        those are the minimal dimensions of the view. These attributes take
+        precendence over content_width and content_height. By default are
+        set to None. When these attributes are None, they are ignored and
+        content_width and content_height is used instead.
+      content_width, content_height: have the same effect as min_*, but with
+        lower priority (if min_width is set, content_width is generally
+        ignored). Unlike min_*, these attributes are set *by the class itself*.
+      derived_min_width, derived_min_height: managed by the class, equal
+        to min_width/min_height if it's defined, otherwise to
+        content_width/content_height.
+      flex_width, flex_height: boolean attributes, set by the external code. If
+        one of these attributes is set to False, the widget requires to be have
+        exactly derived_min_* size in a specified dimension. Otherwise,
+        the underlying pane will be resized
+      hidden: boolean attribute, set by the external code. If True, will not
+        render anything in on_draw.
+      background_color: same as background_color in underlying Pane.
+    """
+    min_width: Attribute[Optional[float]] = Attribute('min_width_')
+    min_height: Attribute[Optional[float]] = Attribute('min_height_')
+    content_width: Attribute[Optional[float]] = Attribute('content_width_')
+    content_height: Attribute[Optional[float]] = Attribute('content_height_')
+    derived_min_width: Attribute[float] = Attribute('derived_min_width_')
+    derived_min_height: Attribute[float] = Attribute('derived_min_height_')
+    flex_width: Attribute[bool] = Attribute('flex_width_')
+    flex_height: Attribute[bool] = Attribute('flex_height_')
+    hidden: Attribute[bool] = Attribute('hidden_')
+    background_color: Attribute[Optional[Tuple[int, int, int]]] = Attribute(
+        'background_color_')
+
+    def __init__(self, min_width: MaybeObservable[Optional[float]] = None,
+                 min_height: MaybeObservable[Optional[float]] = None,
+                 flex_width: MaybeObservable[bool] = False,
+                 flex_height: MaybeObservable[bool] = False,
+                 background_color:
+                    MaybeObservable[Optional[Tuple[int, int, int]]] = None,
+                 hidden: MaybeObservable[bool] = False):
+        self.pane: Optional[Pane] = None
+        self.min_width_: Observable[Optional[float]] = make_observable(
+            min_width)
+        self.min_height_: Observable[Optional[float]] = make_observable(
+            min_height)
+        self.content_width_: Observable[Optional[float]] = Observable(None)
+        self.content_height_: Observable[Optional[float]] = Observable(None)
+
+        self.min_width_.observe(self._calc_width)
+        self.content_width_.observe(self._calc_width)
+        self.min_height_.observe(self._calc_height)
+        self.content_height_.observe(self._calc_height)
+
+        self.flex_width_: Observable[bool] = make_observable(flex_width)
+        self.flex_height_: Observable[bool] = make_observable(flex_height)
+
+        self.background_color_: Observable[Optional[Tuple[
+            int, int, int]]] = make_observable(background_color)
+        self.hidden_: Observable[bool] = make_observable(hidden)
+        self.hidden_.observe(self._calc_width)
+        self.hidden_.observe(self._calc_height)
+
+        self.derived_min_width_: Observable[float] = Observable(0)
+        self.derived_min_height_: Observable[float] = Observable(0)
+        self._calc_width(None)
+        self._calc_height(None)
 
     def __str__(self):
         return '{}[{}]{}'.format(self.__class__.__name__, self.pane,
                                  '[hidden]' if self.hidden else '')
 
-    @property
-    def hidden(self):
-        return self.get_hidden is not None and self.get_hidden()
-
-    @property
-    def min_width(self):
-        if self.hidden or self._min_width is None:
-            return 0
-        else:
-            return self._min_width
-
-    def min_width_set(self):
-        return self._min_width is not None
-
-    def set_min_width(self, value):
-        self._min_width = value
-        self._update_dims()
-        return self
-
-    @property
-    def min_height(self):
-        if self.hidden or self._min_height is None:
-            return 0
-        else:
-            return self._min_height
-
-    def min_height_set(self):
-        return self._min_height is not None
-
-    def set_min_height(self, value):
-        self._min_height = value
-        self._update_dims()
-        return self
-
-    @property
-    def flex_width(self):
-        return not self.hidden and (self._flex_width is None
-                                    or self._flex_width)
-
-    def flex_width_set(self):
-        return self._flex_width is not None
-
-    def set_flex_width(self, value: bool):
-        self._flex_width = value
-        self._update_dims()
-        return self
-
-    @property
-    def flex_height(self):
-        return not self.hidden and (self._flex_height is None
-                                    or self._flex_height)
-
-    def flex_height_set(self):
-        return self._flex_height is not None
-
-    def set_flex_height(self, value: bool):
-        self._flex_height = value
-        self._update_dims()
-        return self
-
-    def set_background(self, value):
-        self.background = value
-        self.pane.background = value
-        return self
-
     def attach(self, pane: Pane):
-        self.pane.remove_handlers(self)
+        """Attach the view to a pane.
+
+        Usually called by the parent layout class.
+        """
+        if self.pane is not None:
+            self.pane.remove_handlers(self)
+            self.pane.remove_observers(self)
+            self.pane.swap_background(None)
         self.pane = pane
-        self.pane.push_handlers(self)
-        self.pane.push_handlers(on_draw=self.on_draw_check_hidden)
-        self.pane.background = self.background
-        self._update_dims()
-
-    def detach(self):
-        self.pane.remove_handlers(self)
-        self.pane = DUMMY_PANE
-
-    def _update_dims(self):
-        print(self, '_update_dims', self.min_width)
-        self.pane.change_content_dims(self.min_width, self.min_height,
-                                      self.flex_width, self.flex_height)
+        if pane is not None:
+            self.pane.push_handlers(self)
+            self.pane.push_handlers(on_draw=self.on_draw_check_hidden)
+            self.pane.swap_background(self.background_color_)
 
     def on_mouse_enter(self, *args):
         self.pane.window.set_mouse_cursor(None)
 
-    @event.priority(1)
+    @event.priority(2)
     def on_draw_check_hidden(self):
         if self.hidden:
             return event.EVENT_HANDLED
+
+    def _calc_width(self, _):
+        if self.hidden:
+            self.derived_min_width = 0
+        elif self.min_width is None:
+            if self.content_width is None:
+                self.derived_min_width = 0
+            else:
+                self.derived_min_width = self.content_width
+        else:
+            self.derived_min_width = self.min_width
+
+    def _calc_height(self, _):
+        if self.hidden:
+            self.derived_min_height = 0
+        elif self.min_height is None:
+            if self.content_height is None:
+                self.derived_min_height = 0
+            else:
+                self.derived_min_height = self.content_height
+        else:
+            self.derived_min_height = self.min_height

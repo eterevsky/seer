@@ -21,13 +21,13 @@ class Observable(Generic[T]):
 
     `o.remove_observer(callback_or_object)` unregisters observer(s)
     """
-    def __init__(self, value: T = None):
+    def __init__(self, value: T):
         """Initializes the observable value.
 
         Args:
             value: initial value or None by default.
         """
-        self.value: Optional[T] = value
+        self.value: T = value
         self._observers: List[Callable[[T], None]] = []
 
     def set(self, value: T):
@@ -66,7 +66,10 @@ class Observable(Generic[T]):
                 i += 1
 
 
-def make_observable(x: Union[T, Observable[T]]) -> Observable[T]:
+MaybeObservable = Union[T, Observable[T]]
+
+
+def make_observable(x: MaybeObservable[T]) -> Observable[T]:
     """Wrap a value in Observable if it is not Observable.
 
     When the passed value is already an Observable, return it unchanged.
@@ -106,7 +109,7 @@ class Attribute(Generic[T]):
     def _get_observable(self, instance) -> Observable[T]:
         observable = getattr(instance, self.name, None)
         if observable is None:
-            observable = Observable()
+            observable = Observable(None)
             setattr(instance, self.name, observable)
         return observable
 
@@ -115,3 +118,4 @@ class Attribute(Generic[T]):
 
     def __get__(self, instance, owner=None) -> T:
         return self._get_observable(instance).value
+

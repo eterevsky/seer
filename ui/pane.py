@@ -1,4 +1,4 @@
-import pyglet.shapes
+import pyglet.shapes  # type: ignore
 from typing import Optional, Tuple, Union
 
 from . import event
@@ -31,7 +31,7 @@ class Pane(event.EventDispatcher):
     def __init__(self, x0: float, y0: float, x1: float, y1: float,
                  parent_mouse_pos_: Observable[Optional[Tuple[float, float]]],
                  background: Union[Observable, Tuple[int, int, int]] = None):
-        self.coords_: Observable[(float, float, float, float)] = Observable(
+        self.coords_: Observable[Tuple[float, float, float, float]] = Observable(
             (x0, y0, x1, y1))
         self.coords_.observe(self._on_coords_change)
         self.mouse_pos_: Observable[Optional[Tuple[float,
@@ -40,14 +40,19 @@ class Pane(event.EventDispatcher):
         self.parent_mouse_pos_.observe(self._update_mouse_pos)
         self._update_mouse_pos(self.parent_mouse_pos_.value)
 
-        self.background_color_: Observable[Optional(Tuple(
-            int, int, int))] = make_observable(background)
+        self.background_color_: Observable[Optional[Tuple[
+            int, int, int]]] = make_observable(background)
         self.background_color_.observe(self._prepare_background_draw)
         self._prepare_background_draw()
 
     def __str__(self):
         x0, y0, x1, y1 = self.coords
         return 'Pane({}, {}, {}, {})'.format(x0, y0, x1, y1)
+
+    def remove_observers(self, observer):
+        self.coords_.remove_observer(observer)
+        self.mouse_pos_.remove_observer(observer)
+        self.background_color_.remove_observer(observer)
 
     @property
     def width(self):
@@ -89,6 +94,12 @@ class Pane(event.EventDispatcher):
     def contains(self, x, y):
         x0, y0, x1, y1 = self.coords
         return x0 <= x < x1 and y0 <= y < y1
+
+    def swap_background(self, background_color_):
+        """Replace background_color with a new external observable."""
+        self.background_color_.remove_observer(self)
+        self.background_color_ = background_color_
+        self._prepare_background_draw()
 
 
 Pane.register_event_type('on_draw')
