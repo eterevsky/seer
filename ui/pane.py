@@ -29,16 +29,12 @@ class Pane(event.EventDispatcher):
                                         float]]] = Attribute('mouse_pos_')
 
     def __init__(self, x0: float, y0: float, x1: float, y1: float,
-                 parent_mouse_pos_: Observable[Optional[Tuple[float, float]]],
                  background: Union[Observable, Tuple[int, int, int]] = None):
         self.coords_: Observable[Tuple[float, float, float, float]] = Observable(
             (x0, y0, x1, y1))
         self.coords_.observe(self._on_coords_change)
         self.mouse_pos_: Observable[Optional[Tuple[float,
                                                    float]]] = Observable(None)
-        self.parent_mouse_pos_ = parent_mouse_pos_
-        self.parent_mouse_pos_.observe(self._update_mouse_pos)
-        self._update_mouse_pos(self.parent_mouse_pos_.value)
 
         self.background_color_: Observable[Optional[Tuple[
             int, int, int]]] = make_observable(background)
@@ -62,16 +58,8 @@ class Pane(event.EventDispatcher):
     def height(self):
         return self.coords[3] - self.coords[1]
 
-    def _update_mouse_pos(self, parent_mouse_pos):
-        if parent_mouse_pos is None:
-            self.mouse_pos = None
-            return
-        x, y = parent_mouse_pos
-        self.mouse_pos = (x, y) if self.contains(x, y) else None
-
     def _on_coords_change(self, coords):
         self._prepare_background_draw()
-        self._update_mouse_pos(self.parent_mouse_pos_.value)
 
     def _prepare_background_draw(self, *args):
         if self.background_color is None:

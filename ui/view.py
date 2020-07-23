@@ -87,15 +87,19 @@ class View(object):
 
         Usually called by the parent layout class.
         """
-        if self.pane is not None:
-            self.pane.remove_handlers(self)
-            self.pane.remove_observers(self)
-            self.pane.swap_background(None)
+        self.detach()
         self.pane = pane
         if pane is not None:
             self.pane.push_handlers(self)
             self.pane.push_handlers(on_draw=self.on_draw_check_hidden)
             self.pane.swap_background(self.background_color_)
+
+    def detach(self):
+        if self.pane is None:
+            return
+        self.pane.remove_handlers(self)
+        self.pane.remove_observers(self)
+        self.pane.swap_background(None)
 
     def on_mouse_enter(self, *args):
         self.pane.window.set_mouse_cursor(None)

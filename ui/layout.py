@@ -1,15 +1,16 @@
 import enum
-import pyglet
+import pyglet  # type: ignore
+from typing import Optional, Tuple, Union
 
 from .event import EVENT_HANDLED, EVENT_UNHANDLED
+from .observable import Attribute, Observable
 from .pane import Pane
 from .view import View
 
 class RootLayout(object):
-    def __init__(self, window: pyglet.window.Window, child: View = None,
-                 background=None):
-        self.child_pane = Pane(window, 0, 0, window.width, window.height,
-                               background=background)
+    def __init__(self, window: pyglet.window.Window, child: View = None):
+        self.dragging_: Observable[bool] = Observable(False)
+        self.child_pane = Pane(0, 0, window.width, window.height)
         self._child = child
         if child is not None:
             child.attach(self.child_pane)
@@ -35,23 +36,22 @@ class RootLayout(object):
         self._child = value
         self._child.attach(self.child_pane)
 
-    def update_layout(self):
-        self.child_pane.update_layout()
-
     def on_draw(self):
         self.child_pane.dispatch_event('on_draw')
 
     def on_mouse_enter(self, x, y):
-        self.child_pane.dispatch_event('on_mouse_enter', x, y)
+        self.child_pane.mouse_pos = (x, y)
 
     def on_mouse_leave(self, x, y):
-        self.child_pane.dispatch_event('on_mouse_leave', x, y)
+        self.child_pane.mouse_pos = None
 
-    def on_mouse_drag(self, *args):
-        self.child_pane.dispatch_event('on_mouse_drag', *args)
+    def on_mouse_drag(self, x, y, dx, dy, buttons, modifiers):
+        self.child_pane.mouse_pos = (x, y)
+        self.child_pane.dispatch_event(
+            'on_mouse_drag', x, y, dx, dy, buttons, modifiers)
 
-    def on_mouse_motion(self, *args):
-        self.child_pane.dispatch_event('on_mouse_motion', *args)
+    def on_mouse_motion(self, x, y, dx, dy):
+        self.child_pane.mouse_pos = (x, y)
 
     def on_mouse_press(self, *args):
         self.child_pane.dispatch_event('on_mouse_press', *args)
@@ -63,7 +63,7 @@ class RootLayout(object):
         self.child_pane.dispatch_event('on_mouse_scroll', *args)
 
     def on_resize(self, width, height):
-        self.child_pane.change_dims(0, 0, width, height)
+        self.child_pane.coords = (0, 0, width, height)
 
 
 class Orientation(enum.Enum):

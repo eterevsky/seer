@@ -29,7 +29,7 @@ class ViewTest(unittest.TestCase):
 
     def test_background(self):
         view = View(background_color=(1, 2, 3))
-        pane = Pane(0, 0, 100, 100, Observable(None))
+        pane = Pane(0, 0, 100, 100)
         view.attach(pane)
         self.assertEqual(pane.background_color, (1, 2, 3))
         view.background_color = (4, 5, 6)
@@ -48,13 +48,37 @@ class ViewTest(unittest.TestCase):
         self.assertFalse(view.hidden)
         self.assertEqual(view.derived_min_width, 100)
 
-        pane = Pane(0, 0, 100, 100, Observable(None))
+        pane = Pane(0, 0, 100, 100)
         view.attach(pane)
         pane.dispatch_event('on_draw')
         self.assertEqual(view.calls, 1)
 
         view.hidden = True
         self.assertEqual(view.derived_min_width, 0)
+        pane.dispatch_event('on_draw')
+        self.assertEqual(view.calls, 1)
+
+    def test_detach(self):
+        class MyView(View):
+            def __init__(self, **kwargs):
+                super().__init__(**kwargs)
+                self.calls = 0
+
+            def on_draw(self):
+                self.calls += 1
+
+        view = MyView(min_width=100, background_color=(1, 2, 3))
+        pane = Pane(0, 0, 100, 100)
+        view.attach(pane)
+        self.assertEqual(pane.background_color, (1, 2, 3))
+        pane.dispatch_event('on_draw')
+        self.assertEqual(view.calls, 1)
+
+        view.detach()
+        self.assertEqual(pane.background_color, None)
+        view.background_color = (4, 5, 6)
+        self.assertEqual(pane.background_color, None)
+
         pane.dispatch_event('on_draw')
         self.assertEqual(view.calls, 1)
 
