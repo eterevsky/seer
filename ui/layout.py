@@ -1,11 +1,12 @@
 import enum
-import pyglet  # type: ignore
-from typing import Optional, Tuple, Union
+import pyglet    # type: ignore
+from typing import List, Optional, Tuple, Union
 
 from .event import EVENT_HANDLED, EVENT_UNHANDLED
 from .observable import Attribute, Observable
 from .pane import Pane
 from .view import View
+
 
 class RootLayout(object):
     def __init__(self, window: pyglet.window.Window, child: View = None):
@@ -47,8 +48,8 @@ class RootLayout(object):
 
     def on_mouse_drag(self, x, y, dx, dy, buttons, modifiers):
         self.child_pane.mouse_pos = (x, y)
-        self.child_pane.dispatch_event(
-            'on_mouse_drag', x, y, dx, dy, buttons, modifiers)
+        self.child_pane.dispatch_event('on_mouse_drag', x, y, dx, dy, buttons,
+                                       modifiers)
 
     def on_mouse_motion(self, x, y, dx, dy):
         self.child_pane.mouse_pos = (x, y)
@@ -72,34 +73,22 @@ class Orientation(enum.Enum):
 
 
 class StackLayout(View):
-    def __init__(self, orientation: Orientation, *children, **kwargs):
+    def __init__(self, orientation: Orientation, *children: List[View],
+                 **kwargs):
         super().__init__(**kwargs)
 
         self.orientation = orientation
-        self.children = children
-        self.mouseover_pane = None
+        self._mouseover_pane = None
         self._dragging_pane = None
         self._dragging_button = 0
 
-        if not self.min_width_set():
-            if self.orientation == Orientation.HORIZONTAL:
-                min_width = sum(c.min_width for c in self.children)
-            else:
-                min_width = max(c.min_width for c in self.children)
-            self.set_min_width(min_width)
+        self.children = children
+        for child in children:
+            child.derived_width_.observe(self._update_content_width)
+            child.derived_height_.observe(self._update_content_height)
 
-        if not self.min_height_set():
-            if self.orientation == Orientation.VERTICAL:
-                min_height = sum(c.min_height for c in self.children)
-            else:
-                min_height = max(c.min_height for c in self.children)
-            self.set_min_height(min_height)
-
-        if not self.flex_width_set():
-            self.set_flex_width(any(c.flex_width for c in self.children))
-
-        if not self.flex_height_set():
-            self.set_flex_width(any(c.flex_height for c in self.children))
+        self.content_width = self._calc_content_width()
+        self.content_height = self._calc_content_height()
 
     def __str__(self):
         content = ''
@@ -113,27 +102,34 @@ class StackLayout(View):
 
     def attach(self, pane: Pane):
         super().attach(pane)
-        x0, y0, x1, y1 = self.pane.x0, self.pane.y0, self.pane.x1, self.pane.y1
+        pane.coords_.observe(self._update)
+        pane.mouse_pos_.observe(self._observe_mouse_pos)
+
+        # Currently we first attach all the child views to empty panes,
+        # and then resize them. This is not optimal, since a lot of code will be
+        # executed twice. But this is conceptually simpler, so we'll do it for
+        # v0. Will probably optimize later.
+
+        x0, y0, x1, y1 = self.pane.coords
         if self.orientation == Orientation.HORIZONTAL:
             y0 = y1
         else:
             x1 = x0
         for child in self.children:
-            child_pane = Pane(pane.window, x0, y0, x1, y1)
+            child_pane = Pane(x0, y0, x1, y1)
             child.attach(child_pane)
-            child_pane.push_handlers(self.on_content_resize)
+        self._update()
 
     def detach(self):
-        super().detach()
         for child in self.children:
-            child.pane.remove_handlers(self)
             child.detach()
+        super().detach()
 
     def _find_child_pane(self, x, y) -> Pane:
         """Returns the child contining (x, y) or None."""
-        if (self.mouseover_pane is not None
-                and self.mouseover_pane.contains(x, y)):
-            return self.mouseover_pane
+        if (self._mouseover_pane is not None
+                and self._mouseover_pane.contains(x, y)):
+            return self._mouseover_pane
         for child in self.children:
             if child.pane.contains(x, y):
                 return child.pane
@@ -143,17 +139,6 @@ class StackLayout(View):
         for child in self.children:
             child.pane.dispatch_event('on_draw')
 
-    def on_mouse_enter(self, x, y):
-        self.mouseover_pane = self._find_child_pane(x, y)
-        if self.mouseover_pane:
-            return self.mouseover_pane.dispatch_event('on_mouse_enter', x, y)
-
-    def on_mouse_leave(self, x, y):
-        if self.mouseover_pane:
-            pane = self.mouseover_pane
-            self.mouseover_pane = None
-            return pane.dispatch_event('on_mouse_leave', x, y)
-
     def on_mouse_drag(self, x, y, dx, dy, buttons, modifiers):
         if self._dragging_pane is None:
             self._dragging_button = buttons
@@ -162,17 +147,6 @@ class StackLayout(View):
         if self._dragging_pane:
             self._dragging_pane.dispatch_event('on_mouse_drag', x, y, dx, dy,
                                                buttons, modifiers)
-
-    def on_mouse_motion(self, x, y, dx, dy):
-        pane = self._find_child_pane(x, y)
-        if pane is not self.mouseover_pane:
-            if self.mouseover_pane is not None:
-                self.mouseover_pane.dispatch_event('on_mouse_leave', x, y)
-            self.mouseover_pane = pane
-            if pane is not None:
-                pane.dispatch_event('on_mouse_enter', x, y)
-        if pane is not None:
-            return pane.dispatch_event('on_mouse_motion', x, y, dx, dy)
 
     def on_mouse_press(self, x, y, button, modifiers):
         pane = self._find_child_pane(x, y)
@@ -195,70 +169,91 @@ class StackLayout(View):
             return pane.dispatch_event('on_mouse_scroll', x, y, scroll_x,
                                        scroll_y)
 
-    def on_dims_change(self, *args):
-        self._resize()
+    def _observe_mouse_pos(self, pos: Optional[Tuple[float, float]]):
+        if pos is None:
+            if self._mouseover_pane is not None:
+                self._mouseover_pane.mouse_pos = None
+            return
+        x, y = pos
+        if self._mouseover_pane is not None:
+            if self._mouseover_pane.contains(x, y):
+                self._mouseover_pane.mouse_pos = pos
+                return
+            self._mouseover_pane.mouse_pos = None
+        self._mouseover_pane = self._find_child_pane(x, y)
+        if self._mouseover_pane is not None:
+            self._mouseover_pane.mouse_pos = pos
 
-    def on_content_resize(self):
-        print(self, 'on_content_resize')
-        self._resize(debug=True)
+    def _update_content_width(self, *args):
+        self.content_width = self._calc_content_width()
+        self._update()
 
-    def _resize(self, debug=False):
-        if debug:
-            for c in self.children:
-                print(c.min_width)
+    def _update_content_height(self, *args):
+        self.content_height = self._calc_content_height()
+        self._update()
 
-        if self.orientation == Orientation.HORIZONTAL:
-            dim = self.pane.width
-            min_dims = [child.pane.min_width for child in self.children]
-            flexes = [child.pane.flex_width for child in self.children]
-            offset = self.pane.x0
-        elif self.orientation == Orientation.VERTICAL:
-            dim = self.pane.height
-            min_dims = [child.min_height for child in self.children]
-            flexes = [child.pane.flex_height for child in self.children]
-            offset = self.pane.y1
-        else:
-            raise AttributeError()
+    def _calc_content_width(self):
+        raise NotImplementedError('Should be overridden')
 
-        count_flex = sum(flexes)
-        min_dim = sum(min_dims)
-        extra_dim = (dim - min_dim) / max(count_flex, 1)
+    def _calc_content_height(self):
+        raise NotImplementedError('Should be overridden')
 
-        if debug:
-            print('min_dims', min_dims)
-            print('flexes', flexes)
-            for c in self.children:
-                print(c.min_width)
-
-        for child, min_dim, flex in zip(self.children, min_dims, flexes):
-            pane = child.pane
-
-            if self.orientation == Orientation.HORIZONTAL:
-                if extra_dim <= 0 or not flex:
-                    next_offset = min(offset + min_dim, self.pane.x1)
-                else:
-                    next_offset = offset + min_dim + extra_dim
-                pane.change_dims(x0=offset, x1=next_offset, y0=self.pane.y0,
-                                 y1=self.pane.y1)
-            else:
-                if extra_dim <= 0 or not flex:
-                    next_offset = max(offset - min_dim, self.pane.y0)
-                else:
-                    next_offset = offset - min_dim - extra_dim
-                pane.change_dims(x0=self.pane.x0, x1=self.pane.x1,
-                                 y0=next_offset, y1=offset)
-
-            offset = next_offset
+    def _update(self, *args):
+        raise NotImplementedError('Should be overridden')
 
 
 class HStackLayout(StackLayout):
     def __init__(self, *args, **kwargs):
         super().__init__(Orientation.HORIZONTAL, *args, **kwargs)
 
+    def _calc_content_width(self):
+        return sum(c.derived_width for c in self.children)
+
+    def _calc_content_height(self):
+        return max(c.derived_height for c in self.children)
+
+    def _update(self):
+        x0, y0, x1, y1 = self.pane.coords
+        width = x1 - x0
+
+        count_flex = sum(child.flex_width for child in self.children)
+        extra = (width - self.derived_width) / max(count_flex, 1)
+
+        x = x0
+        for child in self.children:
+            if extra <= 0 or not child.flex_width:
+                next_x = min(x + child.derived_width, x1)
+            else:
+                next_x = x + child.derived_width + extra
+            child.pane.coords = (x, y0, next_x, y1)
+            x = next_x
+
 
 class VStackLayout(StackLayout):
     def __init__(self, *args, **kwargs):
         super().__init__(Orientation.VERTICAL, *args, **kwargs)
+
+    def _calc_content_width(self):
+        return max(c.derived_width for c in self.children)
+
+    def _calc_content_height(self):
+        return sum(c.derived_height for c in self.children)
+
+    def _update(self):
+        x0, y0, x1, y1 = self.pane.coords
+        height = y1 - y0
+
+        count_flex = sum(child.flex_height for child in self.children)
+        extra = (height - self.derived_height) / max(count_flex, 1)
+
+        y = y1
+        for child in self.children:
+            if extra <= 0 or not child.flex_height:
+                next_y = max(y - child.derived_height, y0)
+            else:
+                next_y = y - child.derived_height - extra
+            child.pane.coords = (x0, next_y, x1, y)
+            y = next_y
 
 
 class LayersLayout(View):
@@ -360,5 +355,6 @@ class LayersLayout(View):
 
 
 class Spacer(View):
-    def __init__(self, **kwargs):
-        super().__init__(**kwargs)
+    def __init__(self, flex_width=True, flex_height=True, **kwargs):
+        super().__init__(flex_width=flex_width, flex_height=flex_height,
+                         **kwargs)

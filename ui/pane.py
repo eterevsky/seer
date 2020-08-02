@@ -45,7 +45,7 @@ class Pane(event.EventDispatcher):
         x0, y0, x1, y1 = self.coords
         return 'Pane({}, {}, {}, {})'.format(x0, y0, x1, y1)
 
-    def remove_observers(self, observer):
+    def remove_observer(self, observer):
         self.coords_.remove_observer(observer)
         self.mouse_pos_.remove_observer(observer)
         self.background_color_.remove_observer(observer)

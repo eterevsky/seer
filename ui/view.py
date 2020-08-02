@@ -21,12 +21,12 @@ class View(object):
       content_width, content_height: have the same effect as min_*, but with
         lower priority (if min_width is set, content_width is generally
         ignored). Unlike min_*, these attributes are set *by the class itself*.
-      derived_min_width, derived_min_height: managed by the class, equal
+      derived_width, derived_height: managed by the class, equal
         to min_width/min_height if it's defined, otherwise to
         content_width/content_height.
       flex_width, flex_height: boolean attributes, set by the external code. If
         one of these attributes is set to False, the widget requires to be have
-        exactly derived_min_* size in a specified dimension. Otherwise,
+        exactly derived_* size in a specified dimension. Otherwise,
         the underlying pane will be resized
       hidden: boolean attribute, set by the external code. If True, will not
         render anything in on_draw.
@@ -36,8 +36,8 @@ class View(object):
     min_height: Attribute[Optional[float]] = Attribute('min_height_')
     content_width: Attribute[Optional[float]] = Attribute('content_width_')
     content_height: Attribute[Optional[float]] = Attribute('content_height_')
-    derived_min_width: Attribute[float] = Attribute('derived_min_width_')
-    derived_min_height: Attribute[float] = Attribute('derived_min_height_')
+    derived_width: Attribute[float] = Attribute('derived_width_')
+    derived_height: Attribute[float] = Attribute('derived_height_')
     flex_width: Attribute[bool] = Attribute('flex_width_')
     flex_height: Attribute[bool] = Attribute('flex_height_')
     hidden: Attribute[bool] = Attribute('hidden_')
@@ -73,8 +73,8 @@ class View(object):
         self.hidden_.observe(self._calc_width)
         self.hidden_.observe(self._calc_height)
 
-        self.derived_min_width_: Observable[float] = Observable(0)
-        self.derived_min_height_: Observable[float] = Observable(0)
+        self.derived_width_: Observable[float] = Observable(0)
+        self.derived_height_: Observable[float] = Observable(0)
         self._calc_width(None)
         self._calc_height(None)
 
@@ -98,8 +98,24 @@ class View(object):
         if self.pane is None:
             return
         self.pane.remove_handlers(self)
-        self.pane.remove_observers(self)
+        self.pane.remove_observer(self)
         self.pane.swap_background(None)
+
+    def remove_observer(self, observer):
+        self.min_width_.remove_observer(observer)
+        self.min_height_.remove_observer(observer)
+        self.content_width_.remove_observer(observer)
+        self.content_height_.remove_observer(observer)
+        self.min_width_.remove_observer(observer)
+        self.content_width_.remove_observer(observer)
+        self.min_height_.remove_observer(observer)
+        self.content_height_.remove_observer(observer)
+        self.flex_width_.remove_observer(observer)
+        self.flex_height_.remove_observer(observer)
+        self.background_color_.remove_observer(observer)
+        self.hidden_.remove_observer(observer)
+        self.derived_width_.remove_observer(observer)
+        self.derived_height_.remove_observer(observer)
 
     def on_mouse_enter(self, *args):
         self.pane.window.set_mouse_cursor(None)
@@ -111,22 +127,22 @@ class View(object):
 
     def _calc_width(self, _):
         if self.hidden:
-            self.derived_min_width = 0
+            self.derived_width = 0
         elif self.min_width is None:
             if self.content_width is None:
-                self.derived_min_width = 0
+                self.derived_width = 0
             else:
-                self.derived_min_width = self.content_width
+                self.derived_width = self.content_width
         else:
-            self.derived_min_width = self.min_width
+            self.derived_width = self.min_width
 
     def _calc_height(self, _):
         if self.hidden:
-            self.derived_min_height = 0
+            self.derived_height = 0
         elif self.min_height is None:
             if self.content_height is None:
-                self.derived_min_height = 0
+                self.derived_height = 0
             else:
-                self.derived_min_height = self.content_height
+                self.derived_height = self.content_height
         else:
-            self.derived_min_height = self.min_height
+            self.derived_height = self.min_height
